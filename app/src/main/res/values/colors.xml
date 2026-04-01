@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash screen background (matches light mode surface) -->
+    <color name="splash_background">#FFFFFF</color>
+
+    <!-- Retained for non-Compose contexts if needed -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

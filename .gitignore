@@ -1,0 +1,46 @@
+# ---- Gradle ----
+.gradle/
+build/
+app/build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ---- Android Studio / IntelliJ IDEA ----
+*.iml
+.idea/
+!.idea/runConfigurations/
+!.idea/copyright/
+
+# ---- Local config (machine-specific, never commit) ----
+local.properties
+keystore.properties
+
+# ---- Signing keys (NEVER commit) ----
+*.keystore
+*.jks
+*.p12
+
+# ---- Firebase / Google Services (contains project credentials) ----
+google-services.json
+
+# ---- Captures / profiling output ----
+/captures
+*.hprof
+
+# ---- Native build artifacts ----
+.externalNativeBuild/
+.cxx/
+
+# ---- macOS metadata ----
+.DS_Store
+**/.DS_Store
+
+# ---- Test results ----
+*/test-results/
+*/lint-results*
+
+# ---- Generated APK / AAB outputs ----
+*.apk
+*.aab
