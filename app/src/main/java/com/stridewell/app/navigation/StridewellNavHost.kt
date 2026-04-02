@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.stridewell.app.ui.auth.LaunchViewModel
 import com.stridewell.app.ui.auth.SignInScreen
 import com.stridewell.app.ui.auth.WelcomeScreen
+import com.stridewell.app.ui.onboarding.StravaConnectScreen
 import com.stridewell.app.ui.stub.MainStubScreen
 import com.stridewell.app.ui.stub.OnboardingStubScreen
 import kotlinx.coroutines.flow.Flow
@@ -56,7 +57,7 @@ fun StridewellNavHost(
         enterTransition  = { fadeIn(tween(200)) },
         exitTransition   = { fadeOut(tween(200)) }
     ) {
-        // Auth
+        // ── Auth ──────────────────────────────────────────────────────────────
         composable(Route.Welcome.path) {
             WelcomeScreen(
                 onGetStarted = { navController.navigate(Route.StravaConnect.path) },
@@ -67,21 +68,27 @@ fun StridewellNavHost(
             SignInScreen(
                 onSignedIn = { needsOnboarding ->
                     val dest = if (needsOnboarding) Route.StravaConnect.path else Route.Main.path
-                    navController.navigate(dest) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    navController.navigate(dest) { popUpTo(0) { inclusive = true } }
                 },
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // Onboarding (stub until M3–M6)
-        composable(Route.StravaConnect.path)   { OnboardingStubScreen("Strava Connect (M3)") }
+        // ── Onboarding ────────────────────────────────────────────────────────
+        composable(Route.StravaConnect.path) {
+            StravaConnectScreen(
+                onNavigateToInterview = {
+                    navController.navigate(Route.IntakeInterview.path) {
+                        popUpTo(Route.StravaConnect.path) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Route.IntakeInterview.path) { OnboardingStubScreen("Intake Interview (M4)") }
         composable(Route.PlanBuilding.path)    { OnboardingStubScreen("Plan Building (M5)") }
         composable(Route.PlanReveal.path)      { OnboardingStubScreen("Plan Reveal (M6)") }
 
-        // Main (stub until M7)
+        // ── Main (stub until M7) ──────────────────────────────────────────────
         composable(Route.Main.path) { MainStubScreen() }
     }
 }

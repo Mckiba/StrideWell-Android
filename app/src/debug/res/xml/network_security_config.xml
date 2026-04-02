@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Debug only — overrides the main config in debug builds.
+    Allows cleartext HTTP so you can point API_BASE_URL at a local dev server
+    (e.g. http://10.0.0.112:3000 or http://10.0.2.2:3000 on the emulator).
+    This file is never included in release builds.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

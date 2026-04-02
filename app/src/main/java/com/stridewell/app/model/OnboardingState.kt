@@ -67,3 +67,8 @@ data class OnboardingMessageResponse(
     val reply: InterviewMessage,
     val onboarding_state: OnboardingMessageOnboardingState
 )
+
+@Serializable
+data class ConfirmPlanRequest(
+    val plan_version_id: String
+)

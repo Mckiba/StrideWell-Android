@@ -27,7 +27,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL",        "\"https://stridewell-api-production.up.railway.app\"")
+            buildConfigField("String", "API_BASE_URL",        "\"http://10.0.2.2:3000\"")
             buildConfigField("String", "STRAVA_CLIENT_ID",    "\"204378\"")
             buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://oauth/strava/callback\"")
         }
