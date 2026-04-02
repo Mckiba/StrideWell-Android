@@ -40,6 +40,17 @@
                     android:pathPrefix="/strava/callback" />
             </intent-filter>
 
+            <!-- Apple OAuth callback: stridewell://oauth/apple/callback?id_token=... -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="stridewell"
+                    android:host="oauth"
+                    android:pathPrefix="/apple/callback" />
+            </intent-filter>
+
         </activity>
     </application>
 

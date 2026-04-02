@@ -85,4 +85,14 @@ object AppModule {
     @Singleton
     @Named("oauthCode")
     fun provideOauthCodeFlow(): MutableStateFlow<String?> = MutableStateFlow(null)
+
+    /**
+     * Shared Apple ID-token channel.
+     * MainActivity emits the id_token extracted from the Apple OAuth deep link.
+     * SocialAuthViewModel collects it and exchanges with the backend.
+     */
+    @Provides
+    @Singleton
+    @Named("appleOAuthToken")
+    fun provideAppleOAuthTokenFlow(): MutableStateFlow<String?> = MutableStateFlow(null)
 }

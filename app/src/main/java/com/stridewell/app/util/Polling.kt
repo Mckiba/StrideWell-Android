@@ -5,7 +5,6 @@ import kotlinx.coroutines.delay
 
 /**
  * Shared exponential-backoff polling helper.
- * Port of iOS Polling.swift.
  *
  * Used by onboarding screens that wait for server-side state transitions
  * (e.g. Strava analysis complete, plan built).

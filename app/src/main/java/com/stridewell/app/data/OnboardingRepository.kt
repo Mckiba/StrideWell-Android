@@ -62,7 +62,7 @@ class OnboardingRepository @Inject constructor(
     /**
      * Returns true if onboarding was previously completed.
      * Used by LaunchViewModel for offline cold starts — avoids a network
-     * call when the device has no connectivity (mirrors iOS UserDefaults check).
+     * call when the device has no connectivity.
      */
     suspend fun isOnboardingComplete(): Boolean =
         dataStore.data.first()[KEY_COMPLETE] ?: false
@@ -115,7 +115,7 @@ class OnboardingRepository @Inject constructor(
     }
 
     private fun String.extractMessage(): String {
-        val match = Regex(""""message"\s*:\s*"([^"]+)"""").find(this)
+        val match = Regex(""""(?:message|err|error)"\s*:\s*"([^"]+)"""").find(this)
         return match?.groupValues?.get(1) ?: this
     }
 }

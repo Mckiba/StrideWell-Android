@@ -1,7 +1,9 @@
 package com.stridewell.app.api
 
+import com.stridewell.app.model.AppleSignInRequest
 import com.stridewell.app.model.ForgotPasswordRequest
 import com.stridewell.app.model.ForgotPasswordResponse
+import com.stridewell.app.model.GoogleSignInRequest
 import com.stridewell.app.model.LoginRequest
 import com.stridewell.app.model.LoginResponse
 import com.stridewell.app.model.MeResponse
@@ -19,6 +21,12 @@ interface AuthApi {
 
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
+
+    @POST("auth/google")
+    suspend fun googleSignIn(@Body body: GoogleSignInRequest): Response<LoginResponse>
+
+    @POST("auth/apple")
+    suspend fun appleSignIn(@Body body: AppleSignInRequest): Response<LoginResponse>
 
     @GET("auth/me")
     suspend fun me(): Response<MeResponse>

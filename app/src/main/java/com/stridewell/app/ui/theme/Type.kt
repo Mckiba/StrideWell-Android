@@ -6,20 +6,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 /**
- * Semantic typography scale ported from iOS DesignSystem.swift.
+ * Semantic typography scale.
  *
  * Font assignment:
  *   SofiaSans → display headings (titleLarge, titleMedium)
  *   Inter     → body + label text (bodyLarge … labelMedium)
- *
- * iOS → Material3 mapping:
- *   screenTitle  (.title2.bold)      → titleLarge   (20sp bold,     SofiaSans)
- *   sectionTitle (.headline)         → titleMedium  (17sp semibold, SofiaSans)
- *   cardTitle    (.body.semibold)    → bodyLarge    (16sp semibold, Inter)
- *   cardBody     (.subheadline)      → bodyMedium   (15sp normal,   Inter)
- *   dateNumber   (.callout.semibold) → bodySmall    (14sp semibold, Inter)
- *   dateDay      (.caption2.medium)  → labelSmall   (11sp medium,   Inter)
- *   cardCaption  (.caption)          → labelMedium  (12sp normal,   Inter)
  *
  * Activity-card–specific styles live in Font.kt as top-level TextStyle vals.
  */

@@ -2,8 +2,10 @@ package com.stridewell.app.data
 
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.api.AuthApi
+import com.stridewell.app.model.AppleSignInRequest
 import com.stridewell.app.model.ForgotPasswordResponse
 import com.stridewell.app.model.ForgotPasswordRequest
+import com.stridewell.app.model.GoogleSignInRequest
 import com.stridewell.app.model.LoginRequest
 import com.stridewell.app.model.LoginResponse
 import com.stridewell.app.model.MeResponse
@@ -28,13 +30,19 @@ class AuthRepository @Inject constructor(
     suspend fun me(): ApiResult<MeResponse> =
         safeCall { api.me() }
 
+    suspend fun googleSignIn(idToken: String, nonce: String): ApiResult<LoginResponse> =
+        safeCall { api.googleSignIn(GoogleSignInRequest(idToken, nonce)) }
+
+    suspend fun appleSignIn(idToken: String, nonce: String): ApiResult<LoginResponse> =
+        safeCall { api.appleSignIn(AppleSignInRequest(idToken, nonce)) }
+
     suspend fun forgotPassword(email: String): ApiResult<ForgotPasswordResponse> =
         safeCall { api.forgotPassword(ForgotPasswordRequest(email)) }
 
     suspend fun deleteAccount(): ApiResult<Unit> =
         safeCallUnit { api.deleteAccount() }
 
-    // MARK: - Helpers
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private suspend fun <T> safeCall(call: suspend () -> Response<T>): ApiResult<T> {
         return try {
@@ -75,9 +83,10 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    // Extract "message" field from a JSON error body, fallback to raw string
+    // Extract a human-readable message from a JSON error body.
+    // Backend may use "message", "err", or "error" as the key.
     private fun String.extractMessage(): String {
-        val match = Regex(""""message"\s*:\s*"([^"]+)"""").find(this)
+        val match = Regex(""""(?:message|err|error)"\s*:\s*"([^"]+)"""").find(this)
         return match?.groupValues?.get(1) ?: this
     }
 }

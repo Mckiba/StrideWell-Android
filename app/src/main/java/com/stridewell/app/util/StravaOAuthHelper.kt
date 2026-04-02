@@ -15,9 +15,8 @@ import com.stridewell.BuildConfig
  * and emits it on the shared oauthCodeFlow so StravaConnectViewModel can
  * exchange it with the backend.
  *
- * Port of iOS StravaOAuthHelper.swift (which used ASWebAuthenticationSession).
- * Chrome Custom Tabs is the Android equivalent — it requires the deep link
- * round-trip pattern rather than a direct continuation callback.
+ * Chrome Custom Tabs requires the deep link round-trip pattern rather than
+ * a direct continuation callback.
  */
 object StravaOAuthHelper {
 

@@ -30,6 +30,12 @@ android {
             buildConfigField("String", "API_BASE_URL",        "\"http://10.0.2.2:3000\"")
             buildConfigField("String", "STRAVA_CLIENT_ID",    "\"204378\"")
             buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://oauth/strava/callback\"")
+            // Web OAuth client ID from Google Cloud Console (Credentials → Web client)
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"72822339247-lvn41ic0uubh3ol1gr55gq923fusm9sj.apps.googleusercontent.com\"")
+            // Apple Service ID registered in Apple Developer Console
+            buildConfigField("String", "APPLE_CLIENT_ID",      "\"com.stridewell.service\"")
+            // Backend relay receives Apple's form_post then redirects to this deep link
+            buildConfigField("String", "APPLE_REDIRECT_URI",   "\"stridewell://oauth/apple/callback\"")
         }
         release {
             isMinifyEnabled = false
@@ -40,6 +46,9 @@ android {
             buildConfigField("String", "API_BASE_URL",        "\"https://stridewell-api-production.up.railway.app\"")
             buildConfigField("String", "STRAVA_CLIENT_ID",    "\"204378\"")
             buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://oauth/strava/callback\"")
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"72822339247-lvn41ic0uubh3ol1gr55gq923fusm9sj.apps.googleusercontent.com\"")
+            buildConfigField("String", "APPLE_CLIENT_ID",      "\"com.stridewell.service\"")
+            buildConfigField("String", "APPLE_REDIRECT_URI",   "\"stridewell://oauth/apple/callback\"")
         }
     }
 
@@ -94,8 +103,13 @@ dependencies {
     // Coil
     implementation(libs.coil.compose)
 
-    // AndroidX Browser (Custom Tabs — Strava OAuth)
+    // AndroidX Browser (Custom Tabs — Strava + Apple OAuth)
     implementation(libs.androidx.browser)
+
+    // Credential Manager (Google Sign-In)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
 
     // Splash Screen
     implementation(libs.androidx.core.splashscreen)

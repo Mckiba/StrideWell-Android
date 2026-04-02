@@ -29,16 +29,36 @@ class AuthInterceptor(private val tokenStore: TokenStore) : Interceptor {
 }
 
 /**
- * Watches for 401 responses and emits on [unauthorizedFlow] so MainActivity
- * can navigate to WelcomeScreen and clear auth state.
+ * Watches for 401 responses on PROTECTED endpoints and emits on [unauthorizedFlow]
+ * so MainActivity can navigate to WelcomeScreen and clear auth state.
+ *
+ * Auth endpoints (login, register, forgot-password) are explicitly excluded —
+ * a 401 there means wrong credentials, not an expired session. Those errors
+ * are handled by the ViewModel via ApiResult.Error.
  */
 class UnauthorizedInterceptor(
     private val unauthorizedFlow: MutableSharedFlow<Unit>
 ) : Interceptor {
+
+    companion object {
+        /** Paths that legitimately return 401 for bad credentials, not bad tokens. */
+        private val AUTH_PATHS = setOf(
+            "auth/login",
+            "auth/register",
+            "auth/forgot-password",
+            "auth/google",
+            "auth/apple"
+        )
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
         if (response.code == 401) {
-            unauthorizedFlow.tryEmit(Unit)
+            val path = chain.request().url.encodedPath.trimStart('/')
+            val isAuthEndpoint = AUTH_PATHS.any { path.startsWith(it) }
+            if (!isAuthEndpoint) {
+                unauthorizedFlow.tryEmit(Unit)
+            }
         }
         return response
     }

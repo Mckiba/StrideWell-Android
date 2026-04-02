@@ -36,3 +36,15 @@ data class ForgotPasswordRequest(
 data class ForgotPasswordResponse(
     val message: String
 )
+
+@Serializable
+data class GoogleSignInRequest(
+    val id_token: String,
+    val nonce: String
+)
+
+@Serializable
+data class AppleSignInRequest(
+    val id_token: String,
+    val nonce: String
+)

@@ -29,6 +29,11 @@ class MainActivity : ComponentActivity() {
     @Named("oauthCode")
     lateinit var oauthCodeFlow: MutableStateFlow<String?>
 
+    /** Receives the Apple id_token from the deep link redirect. */
+    @Inject
+    @Named("appleOAuthToken")
+    lateinit var appleOAuthTokenFlow: MutableStateFlow<String?>
+
     private val launchViewModel: LaunchViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,9 +75,24 @@ class MainActivity : ComponentActivity() {
 
     private fun handleOAuthIntent(intent: Intent?) {
         val uri = intent?.data ?: return
-        if (uri.scheme == "stridewell" && uri.host == "oauth") {
-            val code = uri.getQueryParameter("code") ?: return
-            oauthCodeFlow.value = code
+        if (uri.scheme != "stridewell" || uri.host != "oauth") return
+
+        val path = uri.path ?: return
+        when {
+            path.startsWith("/strava/callback") -> {
+                val code = uri.getQueryParameter("code") ?: return
+                oauthCodeFlow.value = code
+            }
+            path.startsWith("/apple/callback") -> {
+                // id_token may arrive as a query param or fragment; check both
+                val token = uri.getQueryParameter("id_token")
+                    ?: uri.fragment
+                        ?.split("&")
+                        ?.firstOrNull { it.startsWith("id_token=") }
+                        ?.removePrefix("id_token=")
+                    ?: return
+                appleOAuthTokenFlow.value = token
+            }
         }
     }
 }

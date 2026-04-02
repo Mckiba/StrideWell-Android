@@ -3,8 +3,9 @@ package com.stridewell.app.navigation
 /** Type-safe route definitions for the entire app. */
 sealed class Route(val path: String) {
     // Auth
-    object Welcome     : Route("welcome")
-    object SignIn      : Route("sign_in")
+    object Welcome  : Route("welcome")
+    object SignIn   : Route("sign_in")
+    object SignUp   : Route("sign_up")
 
     // Onboarding
     object StravaConnect    : Route("onboarding/strava_connect")

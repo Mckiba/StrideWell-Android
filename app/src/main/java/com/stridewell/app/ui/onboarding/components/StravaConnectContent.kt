@@ -51,8 +51,6 @@ import com.stridewell.app.ui.theme.StridewellTheme
 /**
  * Stateless presentation layer for the Strava Connect screen.
  * All state is passed in as parameters so this composable is fully previewable.
- *
- * Port of iOS StravaConnectContent.swift.
  */
 @Composable
 fun StravaConnectContent(

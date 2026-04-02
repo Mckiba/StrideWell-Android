@@ -18,7 +18,7 @@ import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
 
 /**
- * Filled primary action button — matches iOS PrimaryButton (large variant).
+ * Filled primary action button.
  *
  * Default colours: accent background, white text. Override via [backgroundColor]/[contentColor].
  */
