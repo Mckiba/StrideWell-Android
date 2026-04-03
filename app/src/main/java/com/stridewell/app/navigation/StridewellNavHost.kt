@@ -14,9 +14,11 @@ import com.stridewell.app.ui.auth.LaunchViewModel
 import com.stridewell.app.ui.auth.SignInScreen
 import com.stridewell.app.ui.auth.SignUpScreen
 import com.stridewell.app.ui.auth.WelcomeScreen
+import com.stridewell.app.ui.onboarding.IntakeInterviewScreen
+import com.stridewell.app.ui.onboarding.PlanBuildingScreen
+import com.stridewell.app.ui.onboarding.PlanRevealScreen
 import com.stridewell.app.ui.onboarding.StravaConnectScreen
 import com.stridewell.app.ui.stub.MainStubScreen
-import com.stridewell.app.ui.stub.OnboardingStubScreen
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -33,7 +35,7 @@ fun StridewellNavHost(
             LaunchViewModel.LaunchState.Unauthenticated -> navController.navigate(Route.Welcome.path) {
                 popUpTo(0) { inclusive = true }
             }
-            LaunchViewModel.LaunchState.NeedsOnboarding -> navController.navigate(Route.StravaConnect.path) {
+            is LaunchViewModel.LaunchState.NeedsOnboarding -> navController.navigate(launchState.route) {
                 popUpTo(0) { inclusive = true }
             }
             LaunchViewModel.LaunchState.Authenticated   -> navController.navigate(Route.Main.path) {
@@ -64,18 +66,20 @@ fun StridewellNavHost(
             WelcomeScreen(
                 onGetStarted = { navController.navigate(Route.SignUp.path) },
                 onSignIn     = { navController.navigate(Route.SignIn.path) },
-                onSignedIn   = { needsOnboarding ->
-                    val dest = if (needsOnboarding) Route.StravaConnect.path else Route.Main.path
-                    navController.navigate(dest) { popUpTo(0) { inclusive = true } }
+                onSignedIn   = { onboardingStatus ->
+                    navController.navigate(Route.forOnboardingStatus(onboardingStatus)) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
 
         composable(Route.SignUp.path) {
             SignUpScreen(
-                onSignedUp = { needsOnboarding ->
-                    val dest = if (needsOnboarding) Route.StravaConnect.path else Route.Main.path
-                    navController.navigate(dest) { popUpTo(0) { inclusive = true } }
+                onSignedUp = { onboardingStatus ->
+                    navController.navigate(Route.forOnboardingStatus(onboardingStatus)) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 },
                 onSignIn = {
                     // Navigate to SignIn, removing SignUp from the back stack
@@ -88,9 +92,10 @@ fun StridewellNavHost(
 
         composable(Route.SignIn.path) {
             SignInScreen(
-                onSignedIn = { needsOnboarding ->
-                    val dest = if (needsOnboarding) Route.StravaConnect.path else Route.Main.path
-                    navController.navigate(dest) { popUpTo(0) { inclusive = true } }
+                onSignedIn = { onboardingStatus ->
+                    navController.navigate(Route.forOnboardingStatus(onboardingStatus)) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 },
                 onBack   = { navController.popBackStack() },
                 onSignUp = {
@@ -113,9 +118,33 @@ fun StridewellNavHost(
                 }
             )
         }
-        composable(Route.IntakeInterview.path) { OnboardingStubScreen("Intake Interview (M4)") }
-        composable(Route.PlanBuilding.path)    { OnboardingStubScreen("Plan Building (M5)") }
-        composable(Route.PlanReveal.path)      { OnboardingStubScreen("Plan Reveal (M6)") }
+        composable(Route.IntakeInterview.path) {
+            IntakeInterviewScreen(
+                onNavigateToPlanBuilding = {
+                    navController.navigate(Route.PlanBuilding.path) {
+                        popUpTo(Route.IntakeInterview.path) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Route.PlanBuilding.path) {
+            PlanBuildingScreen(
+                onNavigateToPlanReveal = {
+                    navController.navigate(Route.PlanReveal.path) {
+                        popUpTo(Route.PlanBuilding.path) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Route.PlanReveal.path) {
+            PlanRevealScreen(
+                onNavigateToMain = {
+                    navController.navigate(Route.Main.path) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
 
         // ── Main (stub until M7) ──────────────────────────────────────────────
 

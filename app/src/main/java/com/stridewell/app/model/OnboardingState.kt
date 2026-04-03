@@ -69,6 +69,12 @@ data class OnboardingMessageResponse(
 )
 
 @Serializable
+data class OnboardingHistoryResponse(
+    val messages: List<InterviewMessage>,
+    val has_more: Boolean
+)
+
+@Serializable
 data class ConfirmPlanRequest(
     val plan_version_id: String
 )

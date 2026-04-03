@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -43,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stridewell.R
+import com.stridewell.app.model.OnboardingStatus
 import com.stridewell.app.ui.components.PrimaryButton
 import com.stridewell.app.ui.theme.AccentLight
 import com.stridewell.app.ui.theme.CornerRadius
@@ -63,7 +63,7 @@ import com.stridewell.app.util.AppleOAuthHelper
 fun WelcomeScreen(
     onGetStarted: () -> Unit,
     onSignIn:     () -> Unit,
-    onSignedIn:   (needsOnboarding: Boolean) -> Unit,
+    onSignedIn:   (onboardingStatus: OnboardingStatus?) -> Unit,
     viewModel: SocialAuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -71,7 +71,7 @@ fun WelcomeScreen(
 
     // Navigate once social sign-in succeeds
     LaunchedEffect(uiState.signedIn) {
-        if (uiState.signedIn == true) onSignedIn(uiState.needsOnboarding)
+        if (uiState.signedIn == true) onSignedIn(uiState.onboardingStatus)
     }
 
     // Launch Apple Chrome Custom Tab when the ViewModel requests it

@@ -43,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.stridewell.app.model.OnboardingStatus
 import com.stridewell.app.ui.components.PrimaryButton
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
@@ -59,7 +60,7 @@ import com.stridewell.app.ui.theme.StridewellTheme
  */
 @Composable
 fun SignUpScreen(
-    onSignedUp: (needsOnboarding: Boolean) -> Unit,
+    onSignedUp: (onboardingStatus: OnboardingStatus?) -> Unit,
     onSignIn:   () -> Unit,
     viewModel:  SignUpViewModel = hiltViewModel()
 ) {
@@ -68,7 +69,7 @@ fun SignUpScreen(
     // Navigate once registration succeeds
     LaunchedEffect(uiState.registeredWith) {
         if (uiState.registeredWith == true) {
-            onSignedUp(uiState.needsOnboarding)
+            onSignedUp(uiState.onboardingStatus)
         }
     }
 

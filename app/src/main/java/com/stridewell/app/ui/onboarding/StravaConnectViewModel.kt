@@ -64,6 +64,7 @@ class StravaConnectViewModel @Inject constructor(
         when (val result = repository.start()) {
             is ApiResult.Success -> {
                 val response = result.data
+                repository.saveConversationId(response.conversation_id)
                 _screenState.value = if (response.strava_connected) {
                     ScreenState.Connected
                 } else {
@@ -85,6 +86,7 @@ class StravaConnectViewModel @Inject constructor(
         when (val result = repository.status()) {
             is ApiResult.Success -> {
                 val state = result.data
+                state.conversation_id?.let { repository.saveConversationId(it) }
                 when (state.status) {
                     OnboardingStatus.interview -> _navigateToInterview.value = true
                     OnboardingStatus.analyzing -> {

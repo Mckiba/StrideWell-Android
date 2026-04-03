@@ -23,9 +23,9 @@ class SignInViewModel @Inject constructor(
     data class UiState(
         val isLoading:    Boolean = false,
         val errorMessage: String? = null,
-        /** Non-null after a successful sign-in — true if onboarding is needed. */
+        /** Non-null after a successful sign-in. */
         val signedIn:     Boolean? = null,
-        val needsOnboarding: Boolean = false
+        val onboardingStatus: OnboardingStatus? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -49,16 +49,15 @@ class SignInViewModel @Inject constructor(
             }
 
             // 2. Fetch onboarding status to determine routing
-            val needsOnboarding = when (val meResult = authRepository.me()) {
+            val onboardingStatus = when (val meResult = authRepository.me()) {
                 is ApiResult.Success -> {
-                    val status = meResult.data.onboarding_status
-                    status != OnboardingStatus.complete && status != OnboardingStatus.skipped
+                    meResult.data.onboarding_status ?: OnboardingStatus.pending
                 }
-                is ApiResult.Error -> true  // fail-safe: route to onboarding
+                is ApiResult.Error -> OnboardingStatus.pending
             }
 
             _uiState.update {
-                it.copy(isLoading = false, signedIn = true, needsOnboarding = needsOnboarding)
+                it.copy(isLoading = false, signedIn = true, onboardingStatus = onboardingStatus)
             }
         }
     }

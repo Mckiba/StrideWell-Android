@@ -6,10 +6,12 @@ import com.stridewell.app.model.OnboardingMessageRequest
 import com.stridewell.app.model.OnboardingMessageResponse
 import com.stridewell.app.model.OnboardingStartResponse
 import com.stridewell.app.model.OnboardingState
+import com.stridewell.app.model.OnboardingHistoryResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface OnboardingApi {
 
@@ -18,6 +20,13 @@ interface OnboardingApi {
 
     @GET("onboarding/status")
     suspend fun status(): Response<OnboardingState>
+
+    @GET("onboarding/history")
+    suspend fun history(
+        @Query("conversation_id") conversationId: String,
+        @Query("limit") limit: Int = 50,
+        @Query("before") before: String? = null
+    ): Response<OnboardingHistoryResponse>
 
     @POST("onboarding/message")
     suspend fun message(@Body body: OnboardingMessageRequest): Response<OnboardingMessageResponse>

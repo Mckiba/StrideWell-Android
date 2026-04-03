@@ -45,6 +45,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.stridewell.app.model.OnboardingStatus
 import com.stridewell.app.ui.components.PrimaryButton
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
@@ -62,7 +63,7 @@ import com.stridewell.app.ui.theme.Spacing
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignInScreen(
-    onSignedIn: (needsOnboarding: Boolean) -> Unit,
+    onSignedIn: (onboardingStatus: OnboardingStatus?) -> Unit,
     onBack:     () -> Unit,
     onSignUp:   () -> Unit,
     signInViewModel:         SignInViewModel         = hiltViewModel(),
@@ -80,7 +81,7 @@ fun SignInScreen(
     // Navigate once sign-in succeeds
     LaunchedEffect(uiState.signedIn) {
         if (uiState.signedIn == true) {
-            onSignedIn(uiState.needsOnboarding)
+            onSignedIn(uiState.onboardingStatus)
         }
     }
 

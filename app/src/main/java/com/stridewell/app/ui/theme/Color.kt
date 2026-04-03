@@ -31,6 +31,15 @@ val md_light_outline          = Color(0xFFBEC6CC)
 val md_light_error            = Color(0xFFBA1A1A)
 val md_light_onError          = Color.White
 
+// MARK: - Warning (semantic, not in M3 ColorScheme)
+val WarningContainerLight = Color(0xFFFDF4D7)
+val OnWarningContainerLight = Color(0xFF9C6700)
+val WarningBadgeLight = Color(0xFFFFECB0)
+
+val WarningContainerDark = Color(0xFF2D2200)
+val OnWarningContainerDark = Color(0xFFF0B429)
+val WarningBadgeDark = Color(0xFF4D3800)
+
 // MARK: - Dark color scheme
 val md_dark_primary           = Color(0xFF5E9CFF)
 val md_dark_onPrimary         = Color(0xFF003258)

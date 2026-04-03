@@ -1,6 +1,8 @@
 package com.stridewell.app.ui.auth
 
 import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
@@ -28,8 +30,6 @@ import java.security.SecureRandom
 import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Named
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 
 @HiltViewModel
 class SocialAuthViewModel @Inject constructor(
@@ -42,7 +42,7 @@ class SocialAuthViewModel @Inject constructor(
         val isLoading: Boolean = false,
         val errorMessage: String? = null,
         val signedIn: Boolean? = null,
-        val needsOnboarding: Boolean = false
+        val onboardingStatus: OnboardingStatus? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -149,15 +149,14 @@ class SocialAuthViewModel @Inject constructor(
             is ApiResult.Success -> {
                 tokenStore.saveToken(result.data.token)
                 val meResult = authRepository.me()
-                val needsOnboarding = when (meResult) {
+                val onboardingStatus = when (meResult) {
                     is ApiResult.Success -> {
-                        val status = meResult.data.onboarding_status
-                        status != OnboardingStatus.complete && status != OnboardingStatus.skipped
+                        meResult.data.onboarding_status ?: OnboardingStatus.pending
                     }
-                    else -> true
+                    else -> OnboardingStatus.pending
                 }
                 _uiState.update {
-                    it.copy(isLoading = false, signedIn = true, needsOnboarding = needsOnboarding)
+                    it.copy(isLoading = false, signedIn = true, onboardingStatus = onboardingStatus)
                 }
             }
             is ApiResult.Error -> {

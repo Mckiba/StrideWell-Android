@@ -23,9 +23,9 @@ class SignUpViewModel @Inject constructor(
     data class UiState(
         val isLoading:       Boolean = false,
         val errorMessage:    String? = null,
-        /** Non-null after successful registration — true if onboarding is needed. */
+        /** Non-null after successful registration. */
         val registeredWith:  Boolean? = null,
-        val needsOnboarding: Boolean = false
+        val onboardingStatus: OnboardingStatus? = null
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -55,16 +55,15 @@ class SignUpViewModel @Inject constructor(
 
             // 2. Fetch onboarding status — new users always need onboarding,
             //    but we confirm via the API to stay in sync with the backend.
-            val needsOnboarding = when (val meResult = authRepository.me()) {
+            val onboardingStatus = when (val meResult = authRepository.me()) {
                 is ApiResult.Success -> {
-                    val status = meResult.data.onboarding_status
-                    status != OnboardingStatus.complete && status != OnboardingStatus.skipped
+                    meResult.data.onboarding_status ?: OnboardingStatus.pending
                 }
-                is ApiResult.Error -> true  // fail-safe: route new users to onboarding
+                is ApiResult.Error -> OnboardingStatus.pending
             }
 
             _uiState.update {
-                it.copy(isLoading = false, registeredWith = true, needsOnboarding = needsOnboarding)
+                it.copy(isLoading = false, registeredWith = true, onboardingStatus = onboardingStatus)
             }
         }
     }

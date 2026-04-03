@@ -4,11 +4,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.api.OnboardingApi
 import com.stridewell.app.api.StravaApi
 import com.stridewell.app.model.ConfirmPlanRequest
 import com.stridewell.app.model.ConfirmPlanResponse
+import com.stridewell.app.model.OnboardingHistoryResponse
 import com.stridewell.app.model.OnboardingMessageRequest
 import com.stridewell.app.model.OnboardingMessageResponse
 import com.stridewell.app.model.OnboardingStartResponse
@@ -33,6 +35,7 @@ class OnboardingRepository @Inject constructor(
 
     companion object {
         private val KEY_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        private val KEY_CONVERSATION_ID = stringPreferencesKey("onboarding_conversation_id")
     }
 
     // ── Onboarding ────────────────────────────────────────────────────────────
@@ -45,6 +48,13 @@ class OnboardingRepository @Inject constructor(
 
     suspend fun message(body: OnboardingMessageRequest): ApiResult<OnboardingMessageResponse> =
         safeCall { onboardingApi.message(body) }
+
+    suspend fun history(
+        conversationId: String,
+        limit: Int = 50,
+        before: String? = null
+    ): ApiResult<OnboardingHistoryResponse> =
+        safeCall { onboardingApi.history(conversationId, limit, before) }
 
     suspend fun skip(): ApiResult<Unit> =
         safeCallUnit { onboardingApi.skip() }
@@ -67,12 +77,29 @@ class OnboardingRepository @Inject constructor(
     suspend fun isOnboardingComplete(): Boolean =
         dataStore.data.first()[KEY_COMPLETE] ?: false
 
+    suspend fun getConversationId(): String? =
+        dataStore.data.first()[KEY_CONVERSATION_ID]
+
+    suspend fun saveConversationId(conversationId: String) {
+        dataStore.edit { prefs -> prefs[KEY_CONVERSATION_ID] = conversationId }
+    }
+
+    suspend fun clearConversationId() {
+        dataStore.edit { prefs -> prefs.remove(KEY_CONVERSATION_ID) }
+    }
+
     suspend fun markComplete() {
-        dataStore.edit { prefs -> prefs[KEY_COMPLETE] = true }
+        dataStore.edit { prefs ->
+            prefs[KEY_COMPLETE] = true
+            prefs.remove(KEY_CONVERSATION_ID)
+        }
     }
 
     suspend fun reset() {
-        dataStore.edit { prefs -> prefs.remove(KEY_COMPLETE) }
+        dataStore.edit { prefs ->
+            prefs.remove(KEY_COMPLETE)
+            prefs.remove(KEY_CONVERSATION_ID)
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

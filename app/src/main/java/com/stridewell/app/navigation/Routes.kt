@@ -1,5 +1,7 @@
 package com.stridewell.app.navigation
 
+import com.stridewell.app.model.OnboardingStatus
+
 /** Type-safe route definitions for the entire app. */
 sealed class Route(val path: String) {
     // Auth
@@ -26,6 +28,15 @@ sealed class Route(val path: String) {
     }
 
     companion object {
+        fun forOnboardingStatus(status: OnboardingStatus?): String = when (status) {
+            OnboardingStatus.complete,
+            OnboardingStatus.skipped -> Main.path
+            OnboardingStatus.interview -> IntakeInterview.path
+            OnboardingStatus.analyzing,
+            OnboardingStatus.pending,
+            null -> StravaConnect.path
+        }
+
         /** Returns a Route.PlanChange route string with the ID filled in. */
         fun planChange(planVersionId: String) = "plan_change/$planVersionId"
         fun activityDetail(runId: String) = "activity_detail/$runId"
