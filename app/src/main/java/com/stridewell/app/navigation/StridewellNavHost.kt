@@ -14,11 +14,12 @@ import com.stridewell.app.ui.auth.LaunchViewModel
 import com.stridewell.app.ui.auth.SignInScreen
 import com.stridewell.app.ui.auth.SignUpScreen
 import com.stridewell.app.ui.auth.WelcomeScreen
+import com.stridewell.app.ui.main.MainContainerScreen
+import com.stridewell.app.ui.main.planchange.PlanChangeScreen
 import com.stridewell.app.ui.onboarding.IntakeInterviewScreen
 import com.stridewell.app.ui.onboarding.PlanBuildingScreen
 import com.stridewell.app.ui.onboarding.PlanRevealScreen
 import com.stridewell.app.ui.onboarding.StravaConnectScreen
-import com.stridewell.app.ui.stub.MainStubScreen
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -146,8 +147,17 @@ fun StridewellNavHost(
             )
         }
 
-        // ── Main (stub until M7) ──────────────────────────────────────────────
+        // ── Main ──────────────────────────────────────────────────────────────
 
-        composable(Route.Main.path) { MainStubScreen() }
+        composable(Route.Main.path) {
+            MainContainerScreen(
+                onOpenPlanChange = { navController.navigate(Route.PlanChange.path) }
+            )
+        }
+        composable(Route.PlanChange.path) {
+            PlanChangeScreen(
+                onDismiss = { navController.popBackStack() }
+            )
+        }
     }
 }

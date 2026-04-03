@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.stridewell.app.api.AuthApi
 import com.stridewell.app.api.OnboardingApi
 import com.stridewell.app.api.PlanApi
+import com.stridewell.app.api.RunsApi
 import com.stridewell.app.api.StravaApi
 import com.stridewell.app.api.buildOkHttpClient
 import com.stridewell.app.api.buildRetrofit
@@ -28,6 +29,9 @@ private val Context.onboardingDataStore: DataStore<Preferences>
 
 private val Context.settingsDataStore: DataStore<Preferences>
     by preferencesDataStore(name = "settings_prefs")
+
+private val Context.planDataStore: DataStore<Preferences>
+    by preferencesDataStore(name = "plan_prefs")
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -74,6 +78,11 @@ object AppModule {
     fun providePlanApi(retrofit: Retrofit): PlanApi =
         retrofit.create(PlanApi::class.java)
 
+    @Provides
+    @Singleton
+    fun provideRunsApi(retrofit: Retrofit): RunsApi =
+        retrofit.create(RunsApi::class.java)
+
     // ── DataStore ─────────────────────────────────────────────────────────────
 
     @Provides
@@ -89,6 +98,13 @@ object AppModule {
     fun provideSettingsDataStore(
         @ApplicationContext context: Context
     ): DataStore<Preferences> = context.settingsDataStore
+
+    @Provides
+    @Singleton
+    @Named("plan")
+    fun providePlanDataStore(
+        @ApplicationContext context: Context
+    ): DataStore<Preferences> = context.planDataStore
 
     // ── OAuth ─────────────────────────────────────────────────────────────────
 

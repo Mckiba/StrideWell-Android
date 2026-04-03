@@ -20,9 +20,7 @@ sealed class Route(val path: String) {
 
     // Shared modal screens
     object Reflection : Route("reflection")
-    data class PlanChange(val planVersionId: String) : Route("plan_change/{planVersionId}") {
-        fun destination() = "plan_change/$planVersionId"
-    }
+    object PlanChange : Route("plan_change")
     data class ActivityDetail(val runId: String) : Route("activity_detail/{runId}") {
         fun destination() = "activity_detail/$runId"
     }
@@ -37,8 +35,7 @@ sealed class Route(val path: String) {
             null -> StravaConnect.path
         }
 
-        /** Returns a Route.PlanChange route string with the ID filled in. */
-        fun planChange(planVersionId: String) = "plan_change/$planVersionId"
+        fun planChange() = PlanChange.path
         fun activityDetail(runId: String) = "activity_detail/$runId"
     }
 }

@@ -15,6 +15,9 @@ object FormatUtils {
             UnitSystem.IMPERIAL -> "%.1f mi".format(meters / 1609.344)
         }
 
+    fun distance(meters: Double, unit: UnitSystem = UnitSystem.METRIC): String =
+        formatDistance(meters, unit)
+
     /**
      * Converts seconds-per-kilometre to a pace string.
      * Metric:   330 → "5:30 /km",  240 → "4:00 /km"
@@ -36,6 +39,9 @@ object FormatUtils {
             }
         }
 
+    fun pace(secondsPerKm: Double, unit: UnitSystem = UnitSystem.METRIC): String =
+        formatPace(secondsPerKm, unit)
+
     /**
      * Converts total seconds to a duration string (unit-system independent).
      * Under 1 hour: "mm:ss" — e.g. 2700 → "45:00"
@@ -51,4 +57,7 @@ object FormatUtils {
             val m = (seconds % 3600) / 60
             "%d:%02d".format(h, m)
         }
+
+    fun duration(seconds: Int): String =
+        formatDuration(seconds)
 }

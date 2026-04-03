@@ -1,6 +1,8 @@
 package com.stridewell.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +27,7 @@ import com.stridewell.app.model.WorkoutType
 import com.stridewell.app.ui.theme.ActivityNameStyle
 import com.stridewell.app.ui.theme.ActivityStatLabelStyle
 import com.stridewell.app.ui.theme.ActivityTimestampStyle
+import com.stridewell.app.ui.theme.CardSurfaceDark
 import com.stridewell.app.ui.theme.CardSurfaceLight
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
@@ -37,8 +40,11 @@ import com.stridewell.app.util.UnitSystem
 fun WorkoutCard(
     day: PlanDay,
     unitSystem: UnitSystem,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val cardColor = if (isSystemInDarkTheme()) CardSurfaceDark else CardSurfaceLight
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -49,9 +55,12 @@ fun WorkoutCard(
                 spotColor = Color.Black.copy(alpha = 0.14f)
             )
             .background(
-                color = CardSurfaceLight,
+                color = cardColor,
                 shape = RoundedCornerShape(CornerRadius.md)
             )
+            .clickable(enabled = onClick != null) {
+                onClick?.invoke()
+            }
             .padding(Spacing.md),
         verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {

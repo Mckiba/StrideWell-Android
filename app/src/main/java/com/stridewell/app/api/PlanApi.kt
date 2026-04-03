@@ -1,6 +1,8 @@
 package com.stridewell.app.api
 
 import com.stridewell.app.model.PlanDay
+import com.stridewell.app.model.GoalSummary
+import com.stridewell.app.model.LatestDecisionResponse
 import com.stridewell.app.model.PlanVersionResponse
 import com.stridewell.app.model.PlanWeekResponse
 import retrofit2.Response
@@ -17,6 +19,12 @@ interface PlanApi {
     suspend fun week(
         @Query("start") start: String
     ): Response<PlanWeekResponse>
+
+    @GET("plan/goal-summary")
+    suspend fun goalSummary(): Response<GoalSummary>
+
+    @GET("plan/latest-decision")
+    suspend fun latestDecision(): Response<LatestDecisionResponse>
 
     @GET("plan/version/{planVersionId}")
     suspend fun version(
