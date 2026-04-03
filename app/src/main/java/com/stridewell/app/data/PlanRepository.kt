@@ -108,6 +108,15 @@ class PlanRepository @Inject constructor(
         _goalSummary.value = summary
     }
 
+    suspend fun cacheWeek(week: PlanWeekResponse) {
+        _weekCache.value = _weekCache.value + (week.start_date to week)
+        _currentPlanVersionId.value = week.plan_version_id
+        _currentWeek.value = week
+        if (_lastSeenPlanVersionId.value == null) {
+            markPlanChangeSeen()
+        }
+    }
+
     fun cachedWeek(startDate: String): PlanWeekResponse? = _weekCache.value[startDate]
 
     suspend fun markPlanChangeSeen() {

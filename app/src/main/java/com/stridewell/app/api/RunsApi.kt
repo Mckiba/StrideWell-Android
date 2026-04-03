@@ -9,6 +9,8 @@ interface RunsApi {
 
     @GET("runs/recent")
     suspend fun recent(
-        @Query("limit") limit: Int = 3
+        @Query("limit") limit: Int = 3,
+        @Query("date_from") dateFrom: String? = null,
+        @Query("date_to") dateTo: String? = null
     ): Response<RecentRunsResponse>
 }

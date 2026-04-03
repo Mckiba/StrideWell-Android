@@ -1,32 +1,21 @@
 package com.stridewell.app.data
 
 import com.stridewell.app.api.ApiResult
-import com.stridewell.app.api.RunsApi
-import com.stridewell.app.model.RecentRunsResponse
-import com.stridewell.app.util.DateUtils
+import com.stridewell.app.api.ReflectionApi
+import com.stridewell.app.model.ReflectionResponse
+import com.stridewell.app.model.ReflectionSubmission
 import java.io.IOException
-import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 import retrofit2.Response
 
 @Singleton
-class RunsRepository @Inject constructor(
-    private val runsApi: RunsApi
+class ReflectionRepository @Inject constructor(
+    private val api: ReflectionApi
 ) {
 
-    suspend fun recent(
-        limit: Int = 3,
-        dateFrom: String? = null,
-        dateTo: String? = null
-    ): ApiResult<RecentRunsResponse> =
-        safeCall { runsApi.recent(limit, dateFrom, dateTo) }
-
-    suspend fun runsForWeek(monday: Date, limit: Int = 20): ApiResult<RecentRunsResponse> {
-        val start = DateUtils.format(monday)
-        val end = DateUtils.format(DateUtils.nextMonday(monday))
-        return recent(limit = limit, dateFrom = start, dateTo = end)
-    }
+    suspend fun submit(submission: ReflectionSubmission): ApiResult<ReflectionResponse> =
+        safeCall { api.submit(submission) }
 
     private suspend fun <T> safeCall(call: suspend () -> Response<T>): ApiResult<T> {
         return try {

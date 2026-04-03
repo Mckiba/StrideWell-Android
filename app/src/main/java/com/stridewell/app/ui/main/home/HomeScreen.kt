@@ -44,6 +44,7 @@ import com.stridewell.app.ui.components.ActivityBannerView
 import com.stridewell.app.ui.components.GoalCard
 import com.stridewell.app.ui.components.SnapCarousel
 import com.stridewell.app.ui.components.WorkoutCard
+import com.stridewell.app.ui.main.reflection.ReflectionScreen
 import com.stridewell.app.ui.theme.SofiaSansFamily
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.util.DateUtils
@@ -63,6 +64,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedWorkout by remember { mutableStateOf<PlanDay?>(null) }
+    var showReflection by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -80,6 +82,7 @@ fun HomeScreen(
                 uiState = uiState,
                 innerPadding = innerPadding,
                 onOpenPlanChange = onOpenPlanChange,
+                onOpenReflection = { showReflection = true },
                 onWorkoutClick = { selectedWorkout = it }
             )
         }
@@ -93,6 +96,14 @@ fun HomeScreen(
                 day = workout,
                 unitSystem = uiState.unitSystem
             )
+        }
+    }
+
+    if (showReflection) {
+        ModalBottomSheet(
+            onDismissRequest = { showReflection = false }
+        ) {
+            ReflectionScreen(onDismiss = { showReflection = false })
         }
     }
 }
@@ -167,6 +178,7 @@ private fun HomeContent(
     uiState: HomeViewModel.UiState,
     innerPadding: PaddingValues,
     onOpenPlanChange: () -> Unit,
+    onOpenReflection: () -> Unit,
     onWorkoutClick: (PlanDay) -> Unit
 ) {
     val cards = remember(uiState.hasPlanChanged, uiState.latestDecision) {
@@ -189,7 +201,8 @@ private fun HomeContent(
                     ActivityBannerView(
                         title1 = "Time to check In!",
                         subtitle = "Lets check in to see how you're doing",
-                        imageRes = R.drawable.onboarding_background
+                        imageRes = R.drawable.onboarding_background,
+                        onTap = onOpenReflection
                     )
                 }
             )

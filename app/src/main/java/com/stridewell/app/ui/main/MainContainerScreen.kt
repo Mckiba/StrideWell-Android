@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.stridewell.app.ui.main.home.HomeScreen
+import com.stridewell.app.ui.main.plan.PlanScreen
 import com.stridewell.app.ui.stub.MainStubScreen
 
 private enum class MainTab(
@@ -65,8 +66,8 @@ fun MainContainerScreen(
                 onOpenPlanChange = onOpenPlanChange,
                 modifier = Modifier.padding(innerPadding)
             )
-            MainTab.Plan -> MainStubScreen(
-                title = "Plan",
+            MainTab.Plan -> PlanScreen(
+                onOpenPlanChange = onOpenPlanChange,
                 modifier = Modifier.padding(innerPadding)
             )
             MainTab.Chat -> MainStubScreen(

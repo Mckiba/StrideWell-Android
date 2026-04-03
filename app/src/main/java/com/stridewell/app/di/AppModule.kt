@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.stridewell.app.api.AuthApi
 import com.stridewell.app.api.OnboardingApi
 import com.stridewell.app.api.PlanApi
+import com.stridewell.app.api.ReflectionApi
 import com.stridewell.app.api.RunsApi
 import com.stridewell.app.api.StravaApi
 import com.stridewell.app.api.buildOkHttpClient
@@ -82,6 +83,11 @@ object AppModule {
     @Singleton
     fun provideRunsApi(retrofit: Retrofit): RunsApi =
         retrofit.create(RunsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideReflectionApi(retrofit: Retrofit): ReflectionApi =
+        retrofit.create(ReflectionApi::class.java)
 
     // ── DataStore ─────────────────────────────────────────────────────────────
 
