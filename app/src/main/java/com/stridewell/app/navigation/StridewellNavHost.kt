@@ -6,7 +6,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -15,11 +18,14 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import androidx.navigation.compose.rememberNavController
 import com.stridewell.app.model.DecisionRecord
+import com.stridewell.app.model.Run
 import com.stridewell.app.ui.auth.LaunchViewModel
 import com.stridewell.app.ui.auth.SignInScreen
 import com.stridewell.app.ui.auth.SignUpScreen
 import com.stridewell.app.ui.auth.WelcomeScreen
 import com.stridewell.app.ui.main.MainContainerScreen
+import com.stridewell.app.ui.main.activities.ActivitiesViewModel
+import com.stridewell.app.ui.main.activities.ActivityDetailScreen
 import com.stridewell.app.ui.main.planchange.PlanChangeScreen
 import com.stridewell.app.ui.onboarding.IntakeInterviewScreen
 import com.stridewell.app.ui.onboarding.PlanBuildingScreen
@@ -162,6 +168,10 @@ fun StridewellNavHost(
                         Uri.encode(Json.encodeToString(DecisionRecord.serializer(), it))
                     }
                     navController.navigate(Route.planChange(encodedRecord))
+                },
+                onNavigateToActivityDetail = { run ->
+                    val encodedRun = Uri.encode(Json.encodeToString(Run.serializer(), run))
+                    navController.navigate(Route.activityDetail(encodedRun))
                 }
             )
         }
@@ -181,6 +191,28 @@ fun StridewellNavHost(
         ) {
             PlanChangeScreen(
                 onDismiss = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Route.ActivityDetail.path,
+            arguments = listOf(
+                navArgument(Route.ActivityDetail.argRun) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val encoded = backStackEntry.arguments?.getString(Route.ActivityDetail.argRun)
+            val run: Run? = encoded
+                ?.let(Uri::decode)
+                ?.let { json -> runCatching { Json.decodeFromString(Run.serializer(), json) }.getOrNull() }
+            val vm: ActivitiesViewModel = hiltViewModel()
+            val unitSystem by vm.uiState.collectAsStateWithLifecycle()
+            ActivityDetailScreen(
+                run = run,
+                unitSystem = unitSystem.unitSystem,
+                onBack = { navController.popBackStack() }
             )
         }
     }

@@ -9,7 +9,10 @@ interface RunsApi {
 
     @GET("runs/recent")
     suspend fun recent(
-        @Query("limit") limit: Int = 3,
+        @Query("limit") limit: Int = 20,
+        @Query("offset") offset: Int = 0,
+        @Query("search") search: String? = null,
+        @Query("date") date: String? = null,
         @Query("date_from") dateFrom: String? = null,
         @Query("date_to") dateTo: String? = null
     ): Response<RecentRunsResponse>

@@ -16,11 +16,14 @@ class RunsRepository @Inject constructor(
 ) {
 
     suspend fun recent(
-        limit: Int = 3,
+        limit: Int = 20,
+        offset: Int = 0,
+        search: String? = null,
+        date: String? = null,
         dateFrom: String? = null,
         dateTo: String? = null
     ): ApiResult<RecentRunsResponse> =
-        safeCall { runsApi.recent(limit, dateFrom, dateTo) }
+        safeCall { runsApi.recent(limit, offset, search, date, dateFrom, dateTo) }
 
     suspend fun runsForWeek(monday: Date, limit: Int = 20): ApiResult<RecentRunsResponse> {
         val start = DateUtils.format(monday)

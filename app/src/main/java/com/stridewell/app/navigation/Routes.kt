@@ -26,8 +26,10 @@ sealed class Route(val path: String) {
         fun destination(encodedRecord: String? = null): String =
             if (encodedRecord.isNullOrBlank()) basePath else "$basePath?record=$encodedRecord"
     }
-    data class ActivityDetail(val runId: String) : Route("activity_detail/{runId}") {
-        fun destination() = "activity_detail/$runId"
+    object ActivityDetail : Route("activity_detail?run={run}") {
+        const val argRun = "run"
+        fun destination(encodedRun: String? = null): String =
+            if (encodedRun.isNullOrBlank()) "activity_detail" else "activity_detail?run=$encodedRun"
     }
 
     companion object {
@@ -41,6 +43,6 @@ sealed class Route(val path: String) {
         }
 
         fun planChange(encodedRecord: String? = null) = PlanChange.destination(encodedRecord)
-        fun activityDetail(runId: String) = "activity_detail/$runId"
+        fun activityDetail(encodedRun: String?) = ActivityDetail.destination(encodedRun)
     }
 }
