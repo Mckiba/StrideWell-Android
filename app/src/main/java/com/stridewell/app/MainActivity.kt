@@ -6,7 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.stridewell.app.data.SettingsRepository
+import com.stridewell.app.util.AppTheme
+import com.stridewell.app.util.isDark
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stridewell.app.navigation.StridewellNavHost
@@ -34,6 +39,9 @@ class MainActivity : ComponentActivity() {
     @Named("appleOAuthToken")
     lateinit var appleOAuthTokenFlow: MutableStateFlow<String?>
 
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
     private val launchViewModel: LaunchViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +59,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            StridewellTheme {
+            val appTheme by settingsRepository.appTheme
+                .collectAsStateWithLifecycle(initialValue = AppTheme.DEVICE)
+            val systemIsDark = isSystemInDarkTheme()
+
+            StridewellTheme(darkTheme = appTheme.isDark(systemIsDark)) {
                 val launchState by launchViewModel.state.collectAsStateWithLifecycle()
 
                 StridewellNavHost(
@@ -75,16 +87,18 @@ class MainActivity : ComponentActivity() {
 
     private fun handleOAuthIntent(intent: Intent?) {
         val uri = intent?.data ?: return
-        if (uri.scheme != "stridewell" || uri.host != "oauth") return
+        if (uri.scheme != "stridewell") return
 
-        val path = uri.path ?: return
-        when {
-            path.startsWith("/strava/callback") -> {
+        when (uri.host) {
+            // Strava: stridewell://localhost?code=...
+            "localhost" -> {
                 val code = uri.getQueryParameter("code") ?: return
                 oauthCodeFlow.value = code
             }
-            path.startsWith("/apple/callback") -> {
-                // id_token may arrive as a query param or fragment; check both
+            // Apple: stridewell://oauth/apple/callback?id_token=...
+            "oauth" -> {
+                val path = uri.path ?: return
+                if (!path.startsWith("/apple/callback")) return
                 val token = uri.getQueryParameter("id_token")
                     ?: uri.fragment
                         ?.split("&")

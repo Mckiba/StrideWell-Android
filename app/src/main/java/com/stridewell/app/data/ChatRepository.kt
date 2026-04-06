@@ -58,6 +58,8 @@ class ChatRepository @Inject constructor(
         }
     }
 
+    suspend fun reset() = clearInMemoryState(clearPersistedConversationId = true)
+
     suspend fun clearInMemoryState(clearPersistedConversationId: Boolean = true) {
         _conversationId.value = null
         _messages.value = emptyList()

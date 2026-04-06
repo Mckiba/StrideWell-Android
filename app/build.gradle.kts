@@ -27,9 +27,9 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL",        "\"http://10.0.2.2:3000\"")
+            buildConfigField("String", "API_BASE_URL",        "\"https://stridewell-api-production.up.railway.app\"")
             buildConfigField("String", "STRAVA_CLIENT_ID",    "\"204378\"")
-            buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://oauth/strava/callback\"")
+            buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://localhost\"")
             // Web OAuth client ID from Google Cloud Console (Credentials → Web client)
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"72822339247-lvn41ic0uubh3ol1gr55gq923fusm9sj.apps.googleusercontent.com\"")
             // Apple Service ID registered in Apple Developer Console
@@ -45,7 +45,7 @@ android {
             )
             buildConfigField("String", "API_BASE_URL",        "\"https://stridewell-api-production.up.railway.app\"")
             buildConfigField("String", "STRAVA_CLIENT_ID",    "\"204378\"")
-            buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://oauth/strava/callback\"")
+            buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://localhost\"")
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"72822339247-lvn41ic0uubh3ol1gr55gq923fusm9sj.apps.googleusercontent.com\"")
             buildConfigField("String", "APPLE_CLIENT_ID",      "\"com.stridewell.service\"")
             buildConfigField("String", "APPLE_REDIRECT_URI",   "\"stridewell://oauth/apple/callback\"")

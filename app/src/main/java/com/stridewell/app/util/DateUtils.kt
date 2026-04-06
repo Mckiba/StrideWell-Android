@@ -12,9 +12,7 @@ object DateUtils {
 
     /** POSIX formatter for YYYY-MM-DD strings (plan dates, week keys). */
     val isoDate: SimpleDateFormat by lazy {
-        SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }
+        SimpleDateFormat("yyyy-MM-dd", Locale.US)
     }
 
     // MARK: - ISO-8601 DateTime Parsing

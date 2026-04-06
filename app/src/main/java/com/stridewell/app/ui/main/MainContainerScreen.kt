@@ -23,6 +23,7 @@ import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.ui.main.home.HomeScreen
 import com.stridewell.app.ui.main.chat.ChatScreen
 import com.stridewell.app.ui.main.plan.PlanScreen
+import com.stridewell.app.ui.main.settings.SettingsScreen
 import com.stridewell.app.ui.stub.MainStubScreen
 
 private enum class MainTab(
@@ -79,8 +80,7 @@ fun MainContainerScreen(
                 title = "Activities",
                 modifier = Modifier.padding(innerPadding)
             )
-            MainTab.Settings -> MainStubScreen(
-                title = "Settings",
+            MainTab.Settings -> SettingsScreen(
                 modifier = Modifier.padding(innerPadding)
             )
         }

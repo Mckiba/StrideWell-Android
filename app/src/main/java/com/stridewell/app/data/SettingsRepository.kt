@@ -2,8 +2,10 @@ package com.stridewell.app.data
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.stridewell.app.util.AppTheme
 import com.stridewell.app.util.UnitSystem
 import java.util.Locale
 import javax.inject.Inject
@@ -19,11 +21,26 @@ class SettingsRepository @Inject constructor(
 ) {
 
     companion object {
-        private val KEY_UNIT_SYSTEM = stringPreferencesKey("settings_unit_system")
+        private val KEY_UNIT_SYSTEM          = stringPreferencesKey("settings_unit_system")
+        private val KEY_APP_THEME            = stringPreferencesKey("settings_app_theme")
+        private val KEY_REFLECTION_REMINDERS = booleanPreferencesKey("settings_reflection_reminders")
+        private val KEY_PLAN_UPDATE_ALERTS   = booleanPreferencesKey("settings_plan_update_alerts")
     }
 
     val unitSystem: Flow<UnitSystem> = dataStore.data.map { prefs ->
         prefs[KEY_UNIT_SYSTEM]?.toUnitSystem() ?: defaultUnitSystem()
+    }
+
+    val appTheme: Flow<AppTheme> = dataStore.data.map { prefs ->
+        prefs[KEY_APP_THEME]?.toAppTheme() ?: AppTheme.DEVICE
+    }
+
+    val reflectionReminders: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_REFLECTION_REMINDERS] ?: true
+    }
+
+    val planUpdateAlerts: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_PLAN_UPDATE_ALERTS] ?: true
     }
 
     suspend fun getUnitSystem(): UnitSystem =
@@ -35,9 +52,33 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    suspend fun setAppTheme(theme: AppTheme) {
+        dataStore.edit { prefs -> prefs[KEY_APP_THEME] = theme.name }
+    }
+
+    suspend fun setReflectionReminders(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[KEY_REFLECTION_REMINDERS] = enabled }
+    }
+
+    suspend fun setPlanUpdateAlerts(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[KEY_PLAN_UPDATE_ALERTS] = enabled }
+    }
+
+    suspend fun reset() {
+        dataStore.edit { prefs ->
+            prefs.remove(KEY_UNIT_SYSTEM)
+            prefs.remove(KEY_APP_THEME)
+            prefs.remove(KEY_REFLECTION_REMINDERS)
+            prefs.remove(KEY_PLAN_UPDATE_ALERTS)
+        }
+    }
+
     private fun defaultUnitSystem(): UnitSystem =
         if (Locale.getDefault().country == "US") UnitSystem.IMPERIAL else UnitSystem.METRIC
 
     private fun String.toUnitSystem(): UnitSystem =
         runCatching { UnitSystem.valueOf(this) }.getOrDefault(defaultUnitSystem())
+
+    private fun String.toAppTheme(): AppTheme =
+        runCatching { AppTheme.valueOf(this) }.getOrDefault(AppTheme.DEVICE)
 }

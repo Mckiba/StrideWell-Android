@@ -12,6 +12,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.ExperimentalSerializationApi
+import java.util.concurrent.TimeUnit
 
 /** Attaches the JWT Bearer token to every outgoing request. */
 class AuthInterceptor(private val tokenStore: TokenStore) : Interceptor {
@@ -85,6 +86,10 @@ fun buildOkHttpClient(
         .addInterceptor(AuthInterceptor(tokenStore))
         .addInterceptor(UnauthorizedInterceptor(unauthorizedFlow))
         .addInterceptor(logging)
+        .callTimeout(120, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)
+        .writeTimeout(120, TimeUnit.SECONDS)
+        .connectTimeout(20, TimeUnit.SECONDS)
         .build()
 }
 

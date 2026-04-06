@@ -29,15 +29,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Strava OAuth callback: stridewell://oauth/strava/callback?code=... -->
+            <!-- Strava OAuth callback: stridewell://localhost?code=... -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="stridewell"
-                    android:host="oauth"
-                    android:pathPrefix="/strava/callback" />
+                    android:host="localhost" />
             </intent-filter>
 
             <!-- Apple OAuth callback: stridewell://oauth/apple/callback?id_token=... -->

@@ -43,7 +43,8 @@ class PlanViewModel @Inject constructor(
         val weekRuns: List<Run> = emptyList(),
         val selectedDay: PlanDay? = null,
         val unitSystem: UnitSystem = UnitSystem.METRIC,
-        val hasPlanChanged: Boolean = false
+        val hasPlanChanged: Boolean = false,
+        val isRefreshing: Boolean = false
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -53,12 +54,31 @@ class PlanViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 settingsRepository.unitSystem,
-                planRepository.planUpdated
-            ) { unitSystem, hasPlanChanged ->
-                unitSystem to hasPlanChanged
-            }.collect { (unitSystem, hasPlanChanged) ->
+                planRepository.planUpdated,
+                planRepository.currentWeek
+            ) { unitSystem, hasPlanChanged, refreshedCurrentWeek ->
+                Triple(unitSystem, hasPlanChanged, refreshedCurrentWeek)
+            }.collect { (unitSystem, hasPlanChanged, refreshedCurrentWeek) ->
                 _uiState.update {
+                    val selectedWeekStart = DateUtils.format(it.selectedMonday)
+                    val syncedDisplayedWeek = if (
+                        refreshedCurrentWeek != null &&
+                        refreshedCurrentWeek.start_date == selectedWeekStart
+                    ) {
+                        refreshedCurrentWeek
+                    } else {
+                        it.displayedWeek
+                    }
+                    val syncedScreenState = when {
+                        syncedDisplayedWeek == null -> it.screenState
+                        syncedDisplayedWeek.days.isEmpty() -> ScreenState.Empty
+                        else -> ScreenState.Loaded
+                    }
                     it.copy(unitSystem = unitSystem, hasPlanChanged = hasPlanChanged)
+                        .copy(
+                            displayedWeek = syncedDisplayedWeek,
+                            screenState = syncedScreenState
+                        )
                 }
             }
         }
@@ -66,7 +86,11 @@ class PlanViewModel @Inject constructor(
     }
 
     fun retry() {
-        loadWeek(_uiState.value.selectedMonday, forceRefresh = true)
+        loadWeek(_uiState.value.selectedMonday, forceRefresh = true, pullToRefresh = false)
+    }
+
+    fun pullToRefresh() {
+        loadWeek(_uiState.value.selectedMonday, forceRefresh = true, pullToRefresh = true)
     }
 
     fun previousWeek() {
@@ -85,54 +109,65 @@ class PlanViewModel @Inject constructor(
         _uiState.update { it.copy(selectedDay = null) }
     }
 
-    private fun loadWeek(monday: Date, forceRefresh: Boolean = false) {
+    private fun loadWeek(
+        monday: Date,
+        forceRefresh: Boolean = false,
+        pullToRefresh: Boolean = false
+    ) {
         viewModelScope.launch {
             val startDate = DateUtils.format(monday)
             _uiState.update {
                 it.copy(
                     selectedMonday = monday,
-                    screenState = if (it.displayedWeek == null) ScreenState.Loading else it.screenState
+                    screenState = if (it.displayedWeek == null) ScreenState.Loading else it.screenState,
+                    isRefreshing = pullToRefresh
                 )
             }
 
             val runsDeferred = async { runsRepository.runsForWeek(monday) }
-
-            if (!forceRefresh) {
-                planRepository.cachedWeek(startDate)?.let { cached ->
-                    val weekRuns = (runsDeferred.await() as? ApiResult.Success)?.data?.runs.orEmpty()
-                    _uiState.update {
-                        it.copy(
-                            displayedWeek = cached,
-                            weekRuns = weekRuns,
-                            screenState = if (cached.days.isEmpty()) ScreenState.Empty else ScreenState.Loaded
-                        )
-                    }
-                    prefetchAdjacentWeeks(monday)
-                    return@launch
-                }
-            }
-
-            when (val result = planRepository.week(startDate)) {
-                is ApiResult.Success -> {
-                    planRepository.cacheWeek(result.data)
-                    val weekRuns = (runsDeferred.await() as? ApiResult.Success)?.data?.runs.orEmpty()
-                    _uiState.update {
-                        it.copy(
-                            displayedWeek = result.data,
-                            weekRuns = weekRuns,
-                            screenState = if (result.data.days.isEmpty()) ScreenState.Empty else ScreenState.Loaded
-                        )
-                    }
-                    prefetchAdjacentWeeks(monday)
-                }
-                is ApiResult.Error -> {
-                    if (result.status == 404) {
+            try {
+                if (!forceRefresh) {
+                    planRepository.cachedWeek(startDate)?.let { cached ->
+                        val weekRuns = (runsDeferred.await() as? ApiResult.Success)?.data?.runs.orEmpty()
                         _uiState.update {
-                            it.copy(displayedWeek = null, weekRuns = emptyList(), screenState = ScreenState.Empty)
+                            it.copy(
+                                displayedWeek = cached,
+                                weekRuns = weekRuns,
+                                screenState = if (cached.days.isEmpty()) ScreenState.Empty else ScreenState.Loaded
+                            )
                         }
-                    } else {
-                        _uiState.update { it.copy(screenState = ScreenState.Error(result.message)) }
+                        prefetchAdjacentWeeks(monday)
+                        return@launch
                     }
+                }
+
+                when (val result = planRepository.week(startDate)) {
+                    is ApiResult.Success -> {
+                        planRepository.setWeekData(result.data)
+                        planRepository.cacheWeek(result.data)
+                        val weekRuns = (runsDeferred.await() as? ApiResult.Success)?.data?.runs.orEmpty()
+                        _uiState.update {
+                            it.copy(
+                                displayedWeek = result.data,
+                                weekRuns = weekRuns,
+                                screenState = if (result.data.days.isEmpty()) ScreenState.Empty else ScreenState.Loaded
+                            )
+                        }
+                        prefetchAdjacentWeeks(monday)
+                    }
+                    is ApiResult.Error -> {
+                        if (result.status == 404) {
+                            _uiState.update {
+                                it.copy(displayedWeek = null, weekRuns = emptyList(), screenState = ScreenState.Empty)
+                            }
+                        } else {
+                            _uiState.update { it.copy(screenState = ScreenState.Error(result.message)) }
+                        }
+                    }
+                }
+            } finally {
+                if (pullToRefresh) {
+                    _uiState.update { it.copy(isRefreshing = false) }
                 }
             }
         }

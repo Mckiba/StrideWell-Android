@@ -13,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -60,78 +61,84 @@ fun PlanScreen(
         }
         PlanViewModel.ScreenState.Empty,
         PlanViewModel.ScreenState.Loaded -> {
-            LazyColumn(
-                modifier = modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(Spacing.md),
-                contentPadding = PaddingValues(Spacing.md)
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = viewModel::pullToRefresh,
+                modifier = modifier.fillMaxSize()
             ) {
-                if (uiState.hasPlanChanged) {
-                    item {
-                        androidx.compose.material3.Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(onClick = onOpenPlanChange),
-                            tonalElevation = 2.dp,
-                            shadowElevation = 2.dp
-                        ) {
-                            Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                                Text("Your plan was updated", style = sectionTitleStyle(), color = MaterialTheme.colorScheme.onSurface)
-                                Text("Tap to see what changed", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.md),
+                    contentPadding = PaddingValues(Spacing.md)
+                ) {
+                    if (uiState.hasPlanChanged) {
+                        item {
+                            androidx.compose.material3.Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(onClick = onOpenPlanChange),
+                                tonalElevation = 2.dp,
+                                shadowElevation = 2.dp
+                            ) {
+                                Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                                    Text("Your plan was updated", style = sectionTitleStyle(), color = MaterialTheme.colorScheme.onSurface)
+                                    Text("Tap to see what changed", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                         }
                     }
-                }
 
-                item {
-                    WeekNavigator(
-                        label = DateUtils.weekRangeLabel(uiState.selectedMonday),
-                        onPrevious = viewModel::previousWeek,
-                        onNext = viewModel::nextWeek
-                    )
-                }
-
-                item {
-                    WeekOverviewCard(
-                        days = uiState.displayedWeek?.days.orEmpty(),
-                        weekRuns = uiState.weekRuns,
-                        monday = uiState.selectedMonday,
-                        unitSystem = uiState.unitSystem
-                    )
-                }
-
-                if (uiState.screenState == PlanViewModel.ScreenState.Empty) {
                     item {
-                        Text(
-                            text = "No workouts this week",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = Spacing.lg)
+                        WeekNavigator(
+                            label = DateUtils.weekRangeLabel(uiState.selectedMonday),
+                            onPrevious = viewModel::previousWeek,
+                            onNext = viewModel::nextWeek
                         )
                     }
-                } else {
-                    items(uiState.displayedWeek?.days.orEmpty().size) { index ->
-                        val day = uiState.displayedWeek!!.days[index]
-                        WorkoutCard(
-                            day = day,
-                            unitSystem = uiState.unitSystem,
-                            onClick = { viewModel.selectDay(day) }
+
+                    item {
+                        WeekOverviewCard(
+                            days = uiState.displayedWeek?.days.orEmpty(),
+                            weekRuns = uiState.weekRuns,
+                            monday = uiState.selectedMonday,
+                            unitSystem = uiState.unitSystem
                         )
                     }
-                }
 
-                val week = uiState.displayedWeek
-                if (week != null && (week.phase_label != null || week.coaching_notes != null)) {
-                    item {
-                        androidx.compose.material3.Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            tonalElevation = 2.dp,
-                            shadowElevation = 2.dp
-                        ) {
-                            Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                                week.phase_label?.let {
-                                    Text(it.replace("_", " ").replaceFirstChar { c -> c.uppercase() }, color = MaterialTheme.colorScheme.primary)
-                                }
-                                week.coaching_notes?.let {
-                                    Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (uiState.screenState == PlanViewModel.ScreenState.Empty) {
+                        item {
+                            Text(
+                                text = "No workouts this week",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = Spacing.lg)
+                            )
+                        }
+                    } else {
+                        items(uiState.displayedWeek?.days.orEmpty().size) { index ->
+                            val day = uiState.displayedWeek!!.days[index]
+                            WorkoutCard(
+                                day = day,
+                                unitSystem = uiState.unitSystem,
+                                onClick = { viewModel.selectDay(day) }
+                            )
+                        }
+                    }
+
+                    val week = uiState.displayedWeek
+                    if (week != null && (week.phase_label != null || week.coaching_notes != null)) {
+                        item {
+                            androidx.compose.material3.Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                tonalElevation = 2.dp,
+                                shadowElevation = 2.dp
+                            ) {
+                                Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                                    week.phase_label?.let {
+                                        Text(it.replace("_", " ").replaceFirstChar { c -> c.uppercase() }, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                    week.coaching_notes?.let {
+                                        Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
                                 }
                             }
                         }
