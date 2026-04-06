@@ -1,5 +1,6 @@
 package com.stridewell.app.navigation
 
+import android.net.Uri
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -7,9 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import androidx.navigation.compose.rememberNavController
+import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.ui.auth.LaunchViewModel
 import com.stridewell.app.ui.auth.SignInScreen
 import com.stridewell.app.ui.auth.SignUpScreen
@@ -21,6 +26,7 @@ import com.stridewell.app.ui.onboarding.PlanBuildingScreen
 import com.stridewell.app.ui.onboarding.PlanRevealScreen
 import com.stridewell.app.ui.onboarding.StravaConnectScreen
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.Json
 
 @Composable
 fun StridewellNavHost(
@@ -151,10 +157,28 @@ fun StridewellNavHost(
 
         composable(Route.Main.path) {
             MainContainerScreen(
-                onOpenPlanChange = { navController.navigate(Route.PlanChange.path) }
+                onOpenPlanChange = { record ->
+                    val encodedRecord = record?.let {
+                        Uri.encode(Json.encodeToString(DecisionRecord.serializer(), it))
+                    }
+                    navController.navigate(Route.planChange(encodedRecord))
+                }
             )
         }
-        composable(Route.PlanChange.path) {
+        composable(
+            route = Route.PlanChange.path,
+            arguments = listOf(
+                navArgument(Route.PlanChange.argRecord) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            ),
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "stridewell://plan-change" },
+                navDeepLink { uriPattern = "stridewell://plan-change?record={record}" }
+            )
+        ) {
             PlanChangeScreen(
                 onDismiss = { navController.popBackStack() }
             )

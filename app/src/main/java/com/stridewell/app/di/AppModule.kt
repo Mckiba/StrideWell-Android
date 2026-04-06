@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.stridewell.app.api.AuthApi
+import com.stridewell.app.api.ChatApi
 import com.stridewell.app.api.OnboardingApi
 import com.stridewell.app.api.PlanApi
 import com.stridewell.app.api.ReflectionApi
@@ -33,6 +34,9 @@ private val Context.settingsDataStore: DataStore<Preferences>
 
 private val Context.planDataStore: DataStore<Preferences>
     by preferencesDataStore(name = "plan_prefs")
+
+private val Context.chatDataStore: DataStore<Preferences>
+    by preferencesDataStore(name = "chat_prefs")
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -68,6 +72,11 @@ object AppModule {
     @Singleton
     fun provideOnboardingApi(retrofit: Retrofit): OnboardingApi =
         retrofit.create(OnboardingApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideChatApi(retrofit: Retrofit): ChatApi =
+        retrofit.create(ChatApi::class.java)
 
     @Provides
     @Singleton
@@ -111,6 +120,13 @@ object AppModule {
     fun providePlanDataStore(
         @ApplicationContext context: Context
     ): DataStore<Preferences> = context.planDataStore
+
+    @Provides
+    @Singleton
+    @Named("chat")
+    fun provideChatDataStore(
+        @ApplicationContext context: Context
+    ): DataStore<Preferences> = context.chatDataStore
 
     // ── OAuth ─────────────────────────────────────────────────────────────────
 

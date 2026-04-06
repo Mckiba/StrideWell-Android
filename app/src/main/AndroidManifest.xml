@@ -51,6 +51,16 @@
                     android:pathPrefix="/apple/callback" />
             </intent-filter>
 
+            <!-- Plan Change deep link: stridewell://plan-change -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="stridewell"
+                    android:host="plan-change" />
+            </intent-filter>
+
         </activity>
     </application>
 

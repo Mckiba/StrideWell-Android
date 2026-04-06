@@ -27,7 +27,8 @@ import com.stridewell.app.util.DateUtils
 fun MessageBubble(
     message: InterviewMessage,
     modifier: Modifier = Modifier,
-    showTimestamp: Boolean = false
+    showTimestamp: Boolean = false,
+    subtitle: String? = null
 ) {
     val isUser = message.role == InterviewMessageRole.user
     val bubbleColor = if (isUser) {
@@ -62,6 +63,20 @@ fun MessageBubble(
                     )
                     .padding(horizontal = 14.dp, vertical = 12.dp)
             )
+
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = if (isUser) TextAlign.End else TextAlign.Start,
+                    modifier = Modifier.padding(
+                        start = Spacing.xs,
+                        top = 2.dp,
+                        end = Spacing.xs
+                    )
+                )
+            }
 
             if (showTimestamp) {
                 Text(

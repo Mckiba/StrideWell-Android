@@ -19,7 +19,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.ui.main.home.HomeScreen
+import com.stridewell.app.ui.main.chat.ChatScreen
 import com.stridewell.app.ui.main.plan.PlanScreen
 import com.stridewell.app.ui.stub.MainStubScreen
 
@@ -36,7 +38,7 @@ private enum class MainTab(
 
 @Composable
 fun MainContainerScreen(
-    onOpenPlanChange: () -> Unit,
+    onOpenPlanChange: (DecisionRecord?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.Home) }
@@ -67,11 +69,10 @@ fun MainContainerScreen(
                 modifier = Modifier.padding(innerPadding)
             )
             MainTab.Plan -> PlanScreen(
-                onOpenPlanChange = onOpenPlanChange,
+                onOpenPlanChange = { onOpenPlanChange(null) },
                 modifier = Modifier.padding(innerPadding)
             )
-            MainTab.Chat -> MainStubScreen(
-                title = "Chat",
+            MainTab.Chat -> ChatScreen(
                 modifier = Modifier.padding(innerPadding)
             )
             MainTab.Activities -> MainStubScreen(

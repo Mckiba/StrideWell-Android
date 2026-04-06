@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.data.AuthRepository
+import com.stridewell.app.data.ChatRepository
 import com.stridewell.app.data.OnboardingRepository
+import com.stridewell.app.data.PlanRepository
 import com.stridewell.app.data.TokenStore
 import com.stridewell.app.navigation.Route
 import com.stridewell.app.model.OnboardingStatus
@@ -19,7 +21,9 @@ import javax.inject.Inject
 class LaunchViewModel @Inject constructor(
     private val tokenStore: TokenStore,
     private val authRepository: AuthRepository,
-    private val onboardingRepository: OnboardingRepository
+    private val onboardingRepository: OnboardingRepository,
+    private val planRepository: PlanRepository,
+    private val chatRepository: ChatRepository
 ) : ViewModel() {
 
     sealed class LaunchState {
@@ -43,6 +47,8 @@ class LaunchViewModel @Inject constructor(
     private fun checkAuth() {
         viewModelScope.launch {
             if (tokenStore.getToken() == null) {
+                planRepository.clearInMemoryState(clearSeenVersion = true)
+                chatRepository.clearInMemoryState(clearPersistedConversationId = true)
                 _state.value = LaunchState.Unauthenticated
                 return@launch
             }
@@ -61,6 +67,8 @@ class LaunchViewModel @Inject constructor(
                 is ApiResult.Error -> {
                     // 401 or network error — treat as unauthenticated
                     tokenStore.clearToken()
+                    planRepository.clearInMemoryState(clearSeenVersion = true)
+                    chatRepository.clearInMemoryState(clearPersistedConversationId = true)
                     _state.value = LaunchState.Unauthenticated
                 }
             }

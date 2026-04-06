@@ -111,7 +111,6 @@ class PlanRepository @Inject constructor(
     suspend fun cacheWeek(week: PlanWeekResponse) {
         _weekCache.value = _weekCache.value + (week.start_date to week)
         _currentPlanVersionId.value = week.plan_version_id
-        _currentWeek.value = week
         if (_lastSeenPlanVersionId.value == null) {
             markPlanChangeSeen()
         }
@@ -119,14 +118,28 @@ class PlanRepository @Inject constructor(
 
     fun cachedWeek(startDate: String): PlanWeekResponse? = _weekCache.value[startDate]
 
-    suspend fun markPlanChangeSeen() {
-        val current = _currentPlanVersionId.value
-        _lastSeenPlanVersionId.value = current
+    suspend fun markPlanChangeSeen(planVersionId: String? = _currentPlanVersionId.value) {
+        _lastSeenPlanVersionId.value = planVersionId
         dataStore.edit { prefs ->
-            if (current == null) {
+            if (planVersionId == null) {
                 prefs.remove(KEY_LAST_SEEN_PLAN_VERSION_ID)
             } else {
-                prefs[KEY_LAST_SEEN_PLAN_VERSION_ID] = current
+                prefs[KEY_LAST_SEEN_PLAN_VERSION_ID] = planVersionId
+            }
+        }
+    }
+
+    suspend fun clearInMemoryState(clearSeenVersion: Boolean = true) {
+        _currentPlanVersionId.value = null
+        _todayPlanDay.value = null
+        _currentWeek.value = null
+        _goalSummary.value = null
+        _weekCache.value = emptyMap()
+
+        if (clearSeenVersion) {
+            _lastSeenPlanVersionId.value = null
+            dataStore.edit { prefs ->
+                prefs.remove(KEY_LAST_SEEN_PLAN_VERSION_ID)
             }
         }
     }

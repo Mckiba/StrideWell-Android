@@ -20,7 +20,12 @@ sealed class Route(val path: String) {
 
     // Shared modal screens
     object Reflection : Route("reflection")
-    object PlanChange : Route("plan_change")
+    object PlanChange : Route("plan_change?record={record}") {
+        const val basePath = "plan_change"
+        const val argRecord = "record"
+        fun destination(encodedRecord: String? = null): String =
+            if (encodedRecord.isNullOrBlank()) basePath else "$basePath?record=$encodedRecord"
+    }
     data class ActivityDetail(val runId: String) : Route("activity_detail/{runId}") {
         fun destination() = "activity_detail/$runId"
     }
@@ -35,7 +40,7 @@ sealed class Route(val path: String) {
             null -> StravaConnect.path
         }
 
-        fun planChange() = PlanChange.path
+        fun planChange(encodedRecord: String? = null) = PlanChange.destination(encodedRecord)
         fun activityDetail(runId: String) = "activity_detail/$runId"
     }
 }

@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.data.AuthRepository
+import com.stridewell.app.data.ChatRepository
+import com.stridewell.app.data.PlanRepository
 import com.stridewell.app.data.TokenStore
 import com.stridewell.app.model.OnboardingStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +19,9 @@ import javax.inject.Inject
 @HiltViewModel
 class SignInViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val tokenStore: TokenStore
+    private val tokenStore: TokenStore,
+    private val planRepository: PlanRepository,
+    private val chatRepository: ChatRepository
 ) : ViewModel() {
 
     data class UiState(
@@ -44,6 +48,8 @@ class SignInViewModel @Inject constructor(
                     return@launch
                 }
                 is ApiResult.Success -> {
+                    planRepository.clearInMemoryState(clearSeenVersion = true)
+                    chatRepository.clearInMemoryState(clearPersistedConversationId = true)
                     tokenStore.saveToken(loginResult.data.token)
                 }
             }

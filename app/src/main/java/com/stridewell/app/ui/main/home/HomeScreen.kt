@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.stridewell.R
+import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.model.PlanDay
 import com.stridewell.app.model.PlanWeekResponse
 import com.stridewell.app.model.Run
@@ -58,7 +59,7 @@ private data class BannerCardData(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun HomeScreen(
-    onOpenPlanChange: () -> Unit,
+    onOpenPlanChange: (DecisionRecord?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -177,7 +178,7 @@ private fun HomeError(
 private fun HomeContent(
     uiState: HomeViewModel.UiState,
     innerPadding: PaddingValues,
-    onOpenPlanChange: () -> Unit,
+    onOpenPlanChange: (DecisionRecord?) -> Unit,
     onOpenReflection: () -> Unit,
     onWorkoutClick: (PlanDay) -> Unit
 ) {
@@ -190,7 +191,7 @@ private fun HomeContent(
                             title1 = "Let's Review the Plan",
                             subtitle = "Your plan has been updated based on your recent runs and reflections",
                             imageRes = R.drawable.onboarding_background,
-                            onTap = onOpenPlanChange
+                            onTap = { onOpenPlanChange(uiState.latestDecision) }
                         )
                     }
                 )
@@ -230,6 +231,7 @@ private fun HomeContent(
             FeaturedWorkoutSection(
                 todayPlanDay = uiState.todayPlanDay,
                 currentWeek = uiState.currentWeek,
+                nextWeek = uiState.nextWeek,
                 unitSystem = uiState.unitSystem,
                 onWorkoutClick = onWorkoutClick
             )
@@ -254,10 +256,11 @@ private fun HomeContent(
 private fun FeaturedWorkoutSection(
     todayPlanDay: PlanDay?,
     currentWeek: PlanWeekResponse?,
+    nextWeek: PlanWeekResponse?,
     unitSystem: com.stridewell.app.util.UnitSystem,
     onWorkoutClick: (PlanDay) -> Unit
 ) {
-    val featured = nextDisplayedWorkout(todayPlanDay, currentWeek)
+    val featured = nextDisplayedWorkout(todayPlanDay, currentWeek, nextWeek)
 
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
         Text(
@@ -286,7 +289,8 @@ private fun FeaturedWorkoutSection(
 
 private fun nextDisplayedWorkout(
     todayPlanDay: PlanDay?,
-    currentWeek: PlanWeekResponse?
+    currentWeek: PlanWeekResponse?,
+    nextWeek: PlanWeekResponse?
 ): Pair<String, PlanDay>? {
     val todayString = DateUtils.format(java.util.Date())
 
@@ -303,7 +307,18 @@ private fun nextDisplayedWorkout(
             day.workout.type != WorkoutType.recovery
     }
 
-    return next?.let { "Next Workout" to it }
+    if (next != null) {
+        return "Next Workout" to next
+    }
+
+    val firstNextWeekWorkout = nextWeek
+        ?.days
+        ?.firstOrNull { day ->
+            day.workout.type != WorkoutType.rest &&
+                day.workout.type != WorkoutType.recovery
+        }
+
+    return firstNextWeekWorkout?.let { "Next Workout" to it }
 }
 
 @Composable

@@ -42,6 +42,7 @@ class HomeViewModel @Inject constructor(
         val unitSystem: UnitSystem = UnitSystem.METRIC,
         val todayPlanDay: PlanDay? = null,
         val currentWeek: PlanWeekResponse? = null,
+        val nextWeek: PlanWeekResponse? = null,
         val goalSummary: GoalSummary? = null,
         val recentRuns: List<Run> = emptyList(),
         val hasPlanChanged: Boolean = false,
@@ -60,11 +61,17 @@ class HomeViewModel @Inject constructor(
                 planRepository.goalSummary,
                 planRepository.planUpdated
             ) { unitSystem, today, week, goal, planUpdated ->
+                val nextWeekStart = week?.start_date
+                    ?.let(DateUtils::parse)
+                    ?.let(DateUtils::nextMonday)
+                    ?.let(DateUtils::format)
+                val nextWeek = nextWeekStart?.let { planRepository.cachedWeek(it) }
                 UiState(
                     screenState = _uiState.value.screenState,
                     unitSystem = unitSystem,
                     todayPlanDay = today,
                     currentWeek = week,
+                    nextWeek = nextWeek,
                     goalSummary = goal,
                     recentRuns = _uiState.value.recentRuns,
                     hasPlanChanged = planUpdated,
