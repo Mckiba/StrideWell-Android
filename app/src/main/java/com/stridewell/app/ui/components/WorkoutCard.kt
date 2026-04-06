@@ -2,7 +2,6 @@ package com.stridewell.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,8 +26,6 @@ import com.stridewell.app.model.WorkoutType
 import com.stridewell.app.ui.theme.ActivityNameStyle
 import com.stridewell.app.ui.theme.ActivityStatLabelStyle
 import com.stridewell.app.ui.theme.ActivityTimestampStyle
-import com.stridewell.app.ui.theme.CardSurfaceDark
-import com.stridewell.app.ui.theme.CardSurfaceLight
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.ui.theme.StridewellTheme
@@ -43,7 +40,7 @@ fun WorkoutCard(
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val cardColor = if (isSystemInDarkTheme()) CardSurfaceDark else CardSurfaceLight
+    val cardColor = MaterialTheme.colorScheme.surface
 
     Column(
         modifier = modifier

@@ -1,7 +1,6 @@
 package com.stridewell.app.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,11 +26,7 @@ import com.stridewell.app.model.formattedRaceDate
 import com.stridewell.app.model.goalName
 import com.stridewell.app.model.totalWeeks
 import com.stridewell.app.model.weeksCompleted
-import com.stridewell.app.ui.theme.CardSurfaceDark
-import com.stridewell.app.ui.theme.CardSurfaceLight
 import com.stridewell.app.ui.theme.CornerRadius
-import com.stridewell.app.ui.theme.ProgressTrackEmptyDark
-import com.stridewell.app.ui.theme.ProgressTrackEmptyLight
 import com.stridewell.app.ui.theme.SofiaSansFamily
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.ui.theme.StridewellTheme
@@ -44,8 +39,8 @@ fun GoalCard(
     unitSystem: UnitSystem,
     modifier: Modifier = Modifier
 ) {
-    val cardColor = if (isSystemInDarkTheme()) CardSurfaceDark else CardSurfaceLight
-    val progressTrack = if (isSystemInDarkTheme()) ProgressTrackEmptyDark else ProgressTrackEmptyLight
+    val cardColor = MaterialTheme.colorScheme.surface
+    val progressTrack = MaterialTheme.colorScheme.surfaceVariant
     val totalWeeks = maxOf(summary.totalWeeks(), 1)
     val weeksCompleted = summary.weeksCompleted()
 

@@ -3,7 +3,6 @@ package com.stridewell.app.ui.components
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,8 +36,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.stridewell.R
 import com.stridewell.app.model.Workout
-import com.stridewell.app.ui.theme.CardSurfaceDark
-import com.stridewell.app.ui.theme.CardSurfaceLight
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.SofiaSansFamily
 import com.stridewell.app.ui.theme.Spacing
@@ -59,7 +56,7 @@ fun ActivityBannerView(
     onTap: (() -> Unit)? = null,
     onDismiss: (() -> Unit)? = null
 ) {
-    val cardColor = if (isSystemInDarkTheme()) CardSurfaceDark else CardSurfaceLight
+    val cardColor = MaterialTheme.colorScheme.surface
 
     Box(modifier = modifier) {
         Row(

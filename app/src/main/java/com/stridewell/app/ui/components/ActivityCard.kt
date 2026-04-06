@@ -1,7 +1,6 @@
 package com.stridewell.app.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,10 +25,6 @@ import com.stridewell.app.ui.theme.ActivityNameStyle
 import com.stridewell.app.ui.theme.ActivityStatLabelStyle
 import com.stridewell.app.ui.theme.ActivityStatValueStyle
 import com.stridewell.app.ui.theme.ActivityTimestampStyle
-import com.stridewell.app.ui.theme.AccentDark
-import com.stridewell.app.ui.theme.AccentLight
-import com.stridewell.app.ui.theme.CardSurfaceDark
-import com.stridewell.app.ui.theme.CardSurfaceLight
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.ui.theme.StridewellTheme
@@ -49,8 +44,8 @@ fun ActivityCard(
             ?.let(PolylineDecoder::decode)
             .orEmpty()
     }
-    val cardColor = if (isSystemInDarkTheme()) CardSurfaceDark else CardSurfaceLight
-    val routeColor = if (isSystemInDarkTheme()) AccentDark else AccentLight
+    val cardColor = MaterialTheme.colorScheme.surface
+    val routeColor = MaterialTheme.colorScheme.primary
 
     Row(
         modifier = modifier

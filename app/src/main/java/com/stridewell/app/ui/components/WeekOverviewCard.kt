@@ -1,7 +1,6 @@
 package com.stridewell.app.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,11 +24,7 @@ import com.stridewell.app.model.PlanDay
 import com.stridewell.app.model.Run
 import com.stridewell.app.model.Workout
 import com.stridewell.app.model.WorkoutType
-import com.stridewell.app.ui.theme.CardSurfaceDark
-import com.stridewell.app.ui.theme.CardSurfaceLight
 import com.stridewell.app.ui.theme.CornerRadius
-import com.stridewell.app.ui.theme.ProgressTrackEmptyDark
-import com.stridewell.app.ui.theme.ProgressTrackEmptyLight
 import com.stridewell.app.ui.theme.SofiaSansFamily
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.ui.theme.StridewellTheme
@@ -46,8 +41,8 @@ fun WeekOverviewCard(
     unitSystem: UnitSystem,
     modifier: Modifier = Modifier
 ) {
-    val cardColor = if (isSystemInDarkTheme()) CardSurfaceDark else CardSurfaceLight
-    val emptyColor = if (isSystemInDarkTheme()) ProgressTrackEmptyDark else ProgressTrackEmptyLight
+    val cardColor = MaterialTheme.colorScheme.surface
+    val emptyColor = MaterialTheme.colorScheme.surfaceVariant
     val workoutDays = days.filter { it.workout.type != WorkoutType.rest }
     val plannedDistance = workoutDays.mapNotNull { it.workout.target_distance_m }.sum()
     val completedDistance = weekRuns.sumOf { it.distance_m }
