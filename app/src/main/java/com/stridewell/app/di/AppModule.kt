@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.stridewell.app.api.AuthApi
 import com.stridewell.app.api.ChatApi
+import com.stridewell.app.api.NotificationsApi
 import com.stridewell.app.api.OnboardingApi
 import com.stridewell.app.api.PlanApi
 import com.stridewell.app.api.ReflectionApi
@@ -101,6 +102,11 @@ object AppModule {
     fun provideReflectionApi(retrofit: Retrofit): ReflectionApi =
         retrofit.create(ReflectionApi::class.java)
 
+    @Provides
+    @Singleton
+    fun provideNotificationsApi(retrofit: Retrofit): NotificationsApi =
+        retrofit.create(NotificationsApi::class.java)
+
     // ── DataStore ─────────────────────────────────────────────────────────────
 
     @Provides
@@ -159,4 +165,14 @@ object AppModule {
     @Singleton
     @Named("appleOAuthToken")
     fun provideAppleOAuthTokenFlow(): MutableStateFlow<String?> = MutableStateFlow(null)
+
+    /**
+     * Shared notification deep link channel.
+     * MainActivity emits the deep_link value from a notification tap intent extra.
+     * StridewellNavHost collects it and navigates to the appropriate screen.
+     */
+    @Provides
+    @Singleton
+    @Named("notificationDeepLink")
+    fun provideNotificationDeepLinkFlow(): MutableStateFlow<String?> = MutableStateFlow(null)
 }

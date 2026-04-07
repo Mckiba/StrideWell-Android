@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -23,8 +24,17 @@ import com.stridewell.app.ui.auth.LaunchViewModel
 import com.stridewell.app.ui.auth.SignInScreen
 import com.stridewell.app.ui.auth.SignUpScreen
 import com.stridewell.app.ui.auth.WelcomeScreen
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.google.firebase.messaging.FirebaseMessaging
 import com.stridewell.app.ui.main.MainContainerScreen
 import com.stridewell.app.ui.main.activities.ActivitiesViewModel
+import com.stridewell.app.ui.main.notifications.NotificationsViewModel
+import kotlinx.coroutines.tasks.await
 import com.stridewell.app.ui.main.activities.ActivityDetailScreen
 import com.stridewell.app.ui.main.planchange.PlanChangeScreen
 import com.stridewell.app.ui.onboarding.IntakeInterviewScreen
@@ -38,6 +48,7 @@ import kotlinx.serialization.json.Json
 fun StridewellNavHost(
     launchState: LaunchViewModel.LaunchState,
     unauthorizedFlow: Flow<Unit>,
+    notificationDeepLinkFlow: Flow<String?>,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
@@ -62,6 +73,17 @@ fun StridewellNavHost(
         unauthorizedFlow.collect {
             navController.navigate(Route.Welcome.path) {
                 popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
+    // Notification tap → navigate to the appropriate screen
+    LaunchedEffect(Unit) {
+        notificationDeepLinkFlow.collect { deepLink ->
+            when (deepLink) {
+                "plan_change" -> navController.navigate(Route.PlanChange.basePath)
+                "plan_reveal" -> navController.navigate(Route.PlanReveal.path)
+                "home"        -> Unit // already at Main; no navigation needed
             }
         }
     }
@@ -162,6 +184,27 @@ fun StridewellNavHost(
         // ── Main ──────────────────────────────────────────────────────────────
 
         composable(Route.Main.path) {
+            val context = LocalContext.current
+            val notificationsVm: NotificationsViewModel = hiltViewModel()
+            val permissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { /* token is registered by onNewToken; also attempt below regardless */ }
+
+            LaunchedEffect(Unit) {
+                // On Android 13+, request POST_NOTIFICATIONS permission if not yet granted
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val granted = ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (!granted) permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                // Always register the current FCM token on every launch (idempotent)
+                runCatching {
+                    val token = FirebaseMessaging.getInstance().token.await()
+                    notificationsVm.registerToken(token)
+                }
+            }
+
             MainContainerScreen(
                 onOpenPlanChange = { record ->
                     val encodedRecord = record?.let {

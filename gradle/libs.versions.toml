@@ -22,6 +22,7 @@ coil                      = "2.7.0"
 browser                   = "1.8.0"
 coreSplashscreen          = "1.0.1"
 googleServicesPlugin      = "4.4.2"
+firebaseBom               = "33.7.0"
 credentials               = "1.5.0"
 googleid                  = "1.1.1"
 
@@ -73,6 +74,10 @@ androidx-browser                     = { group = "androidx.browser",           n
 
 # Splash Screen
 androidx-core-splashscreen           = { group = "androidx.core",              name = "core-splashscreen",                          version.ref = "coreSplashscreen" }
+
+# Firebase
+firebase-bom                         = { group = "com.google.firebase",        name = "firebase-bom",                               version.ref = "firebaseBom" }
+firebase-messaging-ktx               = { group = "com.google.firebase",        name = "firebase-messaging-ktx" }
 
 # Credential Manager (Google Sign-In)
 androidx-credentials                      = { group = "androidx.credentials",                                    name = "credentials",                    version.ref = "credentials" }

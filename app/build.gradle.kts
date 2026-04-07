@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
-    // alias(libs.plugins.google.services)  // Uncomment in M14 when google-services.json is added
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -27,7 +27,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL",        "\"https://stridewell-api-production.up.railway.app\"")
+            buildConfigField("String", "API_BASE_URL",        "\"http://10.0.2.2:3000\"")
             buildConfigField("String", "STRAVA_CLIENT_ID",    "\"204378\"")
             buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://localhost\"")
             // Web OAuth client ID from Google Cloud Console (Credentials → Web client)
@@ -113,6 +113,10 @@ dependencies {
 
     // Splash Screen
     implementation(libs.androidx.core.splashscreen)
+
+    // Firebase BOM + Messaging
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging.ktx)
 
     // Testing
     testImplementation(libs.junit)

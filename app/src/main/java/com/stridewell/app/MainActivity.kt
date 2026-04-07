@@ -42,6 +42,11 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    /** Receives the deep_link extra from a notification tap. */
+    @Inject
+    @Named("notificationDeepLink")
+    lateinit var notificationDeepLinkFlow: MutableStateFlow<String?>
+
     private val launchViewModel: LaunchViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,8 +58,9 @@ class MainActivity : ComponentActivity() {
             launchViewModel.state.value == LaunchViewModel.LaunchState.Loading
         }
 
-        // Handle deep link if app was cold-started via the OAuth callback
+        // Handle deep link if app was cold-started via the OAuth callback or notification tap
         handleOAuthIntent(intent)
+        handleNotificationIntent(intent)
 
         enableEdgeToEdge()
 
@@ -67,8 +73,9 @@ class MainActivity : ComponentActivity() {
                 val launchState by launchViewModel.state.collectAsStateWithLifecycle()
 
                 StridewellNavHost(
-                    launchState      = launchState,
-                    unauthorizedFlow = unauthorizedFlow
+                    launchState               = launchState,
+                    unauthorizedFlow          = unauthorizedFlow,
+                    notificationDeepLinkFlow  = notificationDeepLinkFlow,
                 )
             }
         }
@@ -81,9 +88,15 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleOAuthIntent(intent)
+        handleNotificationIntent(intent)
     }
 
     // ── Deep link handling ────────────────────────────────────────────────────
+
+    private fun handleNotificationIntent(intent: Intent?) {
+        val deepLink = intent?.getStringExtra("deep_link") ?: return
+        notificationDeepLinkFlow.value = deepLink
+    }
 
     private fun handleOAuthIntent(intent: Intent?) {
         val uri = intent?.data ?: return
