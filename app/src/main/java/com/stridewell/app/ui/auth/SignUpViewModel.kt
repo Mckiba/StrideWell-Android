@@ -3,6 +3,7 @@ package com.stridewell.app.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
+import com.stridewell.app.data.ActivityRepository
 import com.stridewell.app.data.AuthRepository
 import com.stridewell.app.data.ChatRepository
 import com.stridewell.app.data.PlanRepository
@@ -21,7 +22,8 @@ class SignUpViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val tokenStore: TokenStore,
     private val planRepository: PlanRepository,
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val activityRepository: ActivityRepository
 ) : ViewModel() {
 
     data class UiState(
@@ -55,6 +57,7 @@ class SignUpViewModel @Inject constructor(
                 is ApiResult.Success -> {
                     planRepository.clearInMemoryState(clearSeenVersion = true)
                     chatRepository.clearInMemoryState(clearPersistedConversationId = true)
+                    activityRepository.reset()
                     tokenStore.saveToken(result.data.token)
                 }
             }

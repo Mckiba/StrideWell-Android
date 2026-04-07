@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.api.StravaApi
+import com.stridewell.app.data.ActivityRepository
 import com.stridewell.app.data.AuthRepository
 import com.stridewell.app.data.ChatRepository
 import com.stridewell.app.data.OnboardingRepository
@@ -40,6 +41,7 @@ class SettingsViewModel @Inject constructor(
     private val planRepository: PlanRepository,
     private val chatRepository: ChatRepository,
     private val runsRepository: RunsRepository,
+    private val activityRepository: ActivityRepository,
     private val tokenStore: TokenStore,
     private val stravaApi: StravaApi,
     private val unauthorizedFlow: MutableSharedFlow<Unit>,
@@ -212,7 +214,8 @@ class SettingsViewModel @Inject constructor(
                 async { onboardingRepository.reset() },
                 async { planRepository.reset() },
                 async { chatRepository.reset() },
-                async { runsRepository.reset() }
+                async { runsRepository.reset() },
+                async { activityRepository.reset() }
             ).awaitAll()
             unauthorizedFlow.tryEmit(Unit)
         }
@@ -239,7 +242,8 @@ class SettingsViewModel @Inject constructor(
                         async { settingsRepository.reset() },
                         async { onboardingRepository.reset() },
                         async { planRepository.reset() },
-                        async { chatRepository.reset() }
+                        async { chatRepository.reset() },
+                        async { activityRepository.reset() }
                     ).awaitAll()
                     unauthorizedFlow.tryEmit(Unit)
                 }

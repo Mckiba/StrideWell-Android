@@ -3,6 +3,7 @@ package com.stridewell.app.ui.main.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
+import com.stridewell.app.data.ActivityRepository
 import com.stridewell.app.data.PlanRepository
 import com.stridewell.app.data.RunsRepository
 import com.stridewell.app.data.SettingsRepository
@@ -27,8 +28,17 @@ import kotlinx.coroutines.launch
 class HomeViewModel @Inject constructor(
     private val planRepository: PlanRepository,
     private val runsRepository: RunsRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val activityRepository: ActivityRepository
 ) : ViewModel() {
+
+    private data class BaseInputs(
+        val unitSystem: UnitSystem,
+        val today: PlanDay?,
+        val week: PlanWeekResponse?,
+        val goal: GoalSummary?,
+        val planUpdated: Boolean
+    )
 
     sealed interface ScreenState {
         data object Loading : ScreenState
@@ -47,6 +57,8 @@ class HomeViewModel @Inject constructor(
         val recentRuns: List<Run> = emptyList(),
         val hasPlanChanged: Boolean = false,
         val latestDecision: DecisionRecord? = null,
+        val showActivityBanner: Boolean = false,
+        val latestSyncedRunId: String? = null,
         val isOffline: Boolean = false
     )
 
@@ -55,13 +67,28 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            combine(
+            val baseInputs = combine(
                 settingsRepository.unitSystem,
                 planRepository.todayPlanDay,
                 planRepository.currentWeek,
                 planRepository.goalSummary,
                 planRepository.planUpdated
             ) { unitSystem, today, week, goal, planUpdated ->
+                BaseInputs(
+                    unitSystem = unitSystem,
+                    today = today,
+                    week = week,
+                    goal = goal,
+                    planUpdated = planUpdated
+                )
+            }
+
+            combine(
+                baseInputs,
+                activityRepository.showActivityBanner,
+                activityRepository.lastSyncedRunId
+            ) { base, showActivityBanner, syncedRunId ->
+                val week = base.week
                 val nextWeekStart = week?.start_date
                     ?.let(DateUtils::parse)
                     ?.let(DateUtils::nextMonday)
@@ -69,14 +96,17 @@ class HomeViewModel @Inject constructor(
                 val nextWeek = nextWeekStart?.let { planRepository.cachedWeek(it) }
                 UiState(
                     screenState = _uiState.value.screenState,
-                    unitSystem = unitSystem,
-                    todayPlanDay = today,
+                    unitSystem = base.unitSystem,
+                    todayPlanDay = base.today,
                     currentWeek = week,
                     nextWeek = nextWeek,
-                    goalSummary = goal,
+                    goalSummary = base.goal,
                     recentRuns = _uiState.value.recentRuns,
-                    hasPlanChanged = planUpdated,
-                    latestDecision = _uiState.value.latestDecision
+                    hasPlanChanged = base.planUpdated,
+                    latestDecision = _uiState.value.latestDecision,
+                    showActivityBanner = showActivityBanner,
+                    latestSyncedRunId = syncedRunId,
+                    isOffline = _uiState.value.isOffline
                 )
             }.collect { derived ->
                 _uiState.value = derived
@@ -96,6 +126,18 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(screenState = ScreenState.Loading) }
             loadData()
+        }
+    }
+
+    fun dismissActivityBanner() {
+        viewModelScope.launch {
+            activityRepository.dismissBanner()
+        }
+    }
+
+    fun dismissPlanChangeBanner() {
+        viewModelScope.launch {
+            planRepository.markPlanChangeSeen()
         }
     }
 

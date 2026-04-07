@@ -12,6 +12,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.stridewell.BuildConfig
 import com.stridewell.app.api.ApiResult
+import com.stridewell.app.data.ActivityRepository
 import com.stridewell.app.data.AuthRepository
 import com.stridewell.app.data.ChatRepository
 import com.stridewell.app.data.PlanRepository
@@ -39,6 +40,7 @@ class SocialAuthViewModel @Inject constructor(
     private val tokenStore: TokenStore,
     private val chatRepository: ChatRepository,
     private val planRepository: PlanRepository,
+    private val activityRepository: ActivityRepository,
     @Named("appleOAuthToken") private val appleTokenFlow: MutableStateFlow<String?>
 ) : ViewModel() {
 
@@ -153,6 +155,7 @@ class SocialAuthViewModel @Inject constructor(
             is ApiResult.Success -> {
                 planRepository.clearInMemoryState(clearSeenVersion = true)
                 chatRepository.clearInMemoryState(clearPersistedConversationId = true)
+                activityRepository.reset()
                 tokenStore.saveToken(result.data.token)
                 val meResult = authRepository.me()
                 val onboardingStatus = when (meResult) {

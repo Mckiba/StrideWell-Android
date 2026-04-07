@@ -33,6 +33,7 @@ import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.stridewell.app.ui.main.MainContainerScreen
 import com.stridewell.app.ui.main.activities.ActivitiesViewModel
+import com.stridewell.app.ui.main.chat.ChatViewModel
 import com.stridewell.app.ui.main.notifications.NotificationsViewModel
 import kotlinx.coroutines.tasks.await
 import com.stridewell.app.ui.main.activities.ActivityDetailScreen
@@ -42,6 +43,7 @@ import com.stridewell.app.ui.onboarding.PlanBuildingScreen
 import com.stridewell.app.ui.onboarding.PlanRevealScreen
 import com.stridewell.app.ui.onboarding.StravaConnectScreen
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
 
 @Composable
@@ -49,6 +51,7 @@ fun StridewellNavHost(
     launchState: LaunchViewModel.LaunchState,
     unauthorizedFlow: Flow<Unit>,
     notificationDeepLinkFlow: Flow<String?>,
+    chatEntryMessageFlow: MutableStateFlow<String?>,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
@@ -186,6 +189,7 @@ fun StridewellNavHost(
         composable(Route.Main.path) {
             val context = LocalContext.current
             val notificationsVm: NotificationsViewModel = hiltViewModel()
+            val chatVm: ChatViewModel = hiltViewModel()
             val permissionLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission()
             ) { /* token is registered by onNewToken; also attempt below regardless */ }
@@ -215,7 +219,9 @@ fun StridewellNavHost(
                 onNavigateToActivityDetail = { run ->
                     val encodedRun = Uri.encode(Json.encodeToString(Run.serializer(), run))
                     navController.navigate(Route.activityDetail(encodedRun))
-                }
+                },
+                chatEntryMessageFlow = chatEntryMessageFlow,
+                chatViewModel = chatVm
             )
         }
         composable(

@@ -10,6 +10,7 @@ import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.navigation.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import javax.inject.Named
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +20,7 @@ import kotlinx.serialization.json.Json
 @HiltViewModel
 class PlanChangeViewModel @Inject constructor(
     private val planRepository: PlanRepository,
+    @Named("chatEntryMessage") private val chatEntryMessageFlow: MutableStateFlow<String?>,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -67,10 +69,9 @@ class PlanChangeViewModel @Inject constructor(
         }
     }
 
-    fun markSeen(onDone: () -> Unit) {
+    fun discussWithCoach(onDone: () -> Unit) {
         viewModelScope.launch {
-            val versionId = (screenState.value as? ScreenState.Loaded)?.record?.to_plan_version_id
-            planRepository.markPlanChangeSeen(versionId)
+            chatEntryMessageFlow.value = "Can you walk me through why my plan changed?"
             onDone()
         }
     }

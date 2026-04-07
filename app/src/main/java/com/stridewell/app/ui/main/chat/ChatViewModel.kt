@@ -89,6 +89,10 @@ class ChatViewModel @Inject constructor(
         sendMessage(prompt, clearInput = false, appendOptimisticUserMessage = true)
     }
 
+    fun sendInitialMessage(message: String) {
+        sendMessage(message, clearInput = false, appendOptimisticUserMessage = true)
+    }
+
     fun retry() {
         val message = pendingMessage ?: return
         sendMessage(message, clearInput = false, appendOptimisticUserMessage = false)

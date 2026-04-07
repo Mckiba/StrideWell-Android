@@ -8,18 +8,21 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.stridewell.app.data.SettingsRepository
-import com.stridewell.app.util.AppTheme
-import com.stridewell.app.util.isDark
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.stridewell.app.data.ActivityRepository
+import com.stridewell.app.data.PlanRepository
+import com.stridewell.app.data.SettingsRepository
 import com.stridewell.app.navigation.StridewellNavHost
 import com.stridewell.app.ui.auth.LaunchViewModel
 import com.stridewell.app.ui.theme.StridewellTheme
+import com.stridewell.app.util.AppTheme
+import com.stridewell.app.util.isDark
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -42,10 +45,21 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    @Inject
+    lateinit var activityRepository: ActivityRepository
+
+    @Inject
+    lateinit var planRepository: PlanRepository
+
     /** Receives the deep_link extra from a notification tap. */
     @Inject
     @Named("notificationDeepLink")
     lateinit var notificationDeepLinkFlow: MutableStateFlow<String?>
+
+    /** Shared event for opening chat with an auto-sent message. */
+    @Inject
+    @Named("chatEntryMessage")
+    lateinit var chatEntryMessageFlow: MutableStateFlow<String?>
 
     private val launchViewModel: LaunchViewModel by viewModels()
 
@@ -76,6 +90,7 @@ class MainActivity : ComponentActivity() {
                     launchState               = launchState,
                     unauthorizedFlow          = unauthorizedFlow,
                     notificationDeepLinkFlow  = notificationDeepLinkFlow,
+                    chatEntryMessageFlow      = chatEntryMessageFlow,
                 )
             }
         }
@@ -94,8 +109,26 @@ class MainActivity : ComponentActivity() {
     // ── Deep link handling ────────────────────────────────────────────────────
 
     private fun handleNotificationIntent(intent: Intent?) {
-        val deepLink = intent?.getStringExtra("deep_link") ?: return
-        notificationDeepLinkFlow.value = deepLink
+        if (intent == null) return
+
+        val deepLink = intent.extras?.getString("deep_link")
+        val runId = intent.extras?.getString("run_id")
+        val planVersionId = intent.extras?.getString("plan_version_id")
+        val summary = intent.extras?.getString("body")
+            ?: intent.extras?.getString("gcm.notification.body")
+            ?: ""
+
+        if (!runId.isNullOrBlank()) {
+            lifecycleScope.launch {
+                activityRepository.setLastSyncedRun(runId, summary)
+            }
+        }
+        if (!planVersionId.isNullOrBlank()) {
+            planRepository.setCurrentPlanVersionId(planVersionId)
+        }
+        if (!deepLink.isNullOrBlank()) {
+            notificationDeepLinkFlow.value = deepLink
+        }
     }
 
     private fun handleOAuthIntent(intent: Intent?) {

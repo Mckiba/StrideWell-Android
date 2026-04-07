@@ -60,6 +60,7 @@ private data class BannerCardData(
 @OptIn(ExperimentalMaterial3Api::class)
 fun HomeScreen(
     onOpenPlanChange: (DecisionRecord?) -> Unit,
+    onOpenChatWithMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -83,6 +84,9 @@ fun HomeScreen(
                 uiState = uiState,
                 innerPadding = innerPadding,
                 onOpenPlanChange = onOpenPlanChange,
+                onDismissPlanChangeBanner = viewModel::dismissPlanChangeBanner,
+                onOpenChatWithMessage = onOpenChatWithMessage,
+                onDismissActivityBanner = viewModel::dismissActivityBanner,
                 onOpenReflection = { showReflection = true },
                 onWorkoutClick = { selectedWorkout = it }
             )
@@ -179,19 +183,45 @@ private fun HomeContent(
     uiState: HomeViewModel.UiState,
     innerPadding: PaddingValues,
     onOpenPlanChange: (DecisionRecord?) -> Unit,
+    onDismissPlanChangeBanner: () -> Unit,
+    onOpenChatWithMessage: (String) -> Unit,
+    onDismissActivityBanner: () -> Unit,
     onOpenReflection: () -> Unit,
     onWorkoutClick: (PlanDay) -> Unit
 ) {
-    val cards = remember(uiState.hasPlanChanged, uiState.latestDecision) {
+    val cards = remember(
+        uiState.hasPlanChanged,
+        uiState.latestDecision,
+        uiState.showActivityBanner,
+        uiState.latestSyncedRunId
+    ) {
         buildList {
-            if (uiState.hasPlanChanged && uiState.latestDecision != null) {
+            if (uiState.hasPlanChanged) {
                 add(
                     BannerCardData("plan-change") {
                         ActivityBannerView(
                             title1 = "Let's Review the Plan",
                             subtitle = "Your plan has been updated based on your recent runs and reflections",
                             imageRes = R.drawable.onboarding_background,
-                            onTap = { onOpenPlanChange(uiState.latestDecision) }
+                            onTap = { onOpenPlanChange(uiState.latestDecision) },
+                            onDismiss = onDismissPlanChangeBanner
+                        )
+                    }
+                )
+            }
+
+            if (uiState.showActivityBanner) {
+                add(
+                    BannerCardData("activity-${uiState.latestSyncedRunId ?: "pending"}") {
+                        ActivityBannerView(
+                            title1 = "Great work out there!",
+                            subtitle = "Let's talk about that last run",
+                            imageRes = R.drawable.onboarding_background,
+                            onTap = {
+                                onDismissActivityBanner()
+                                onOpenChatWithMessage("Let's talk about my last run.")
+                            },
+                            onDismiss = onDismissActivityBanner
                         )
                     }
                 )
@@ -244,6 +274,12 @@ private fun HomeContent(
         }
 
         item {
+            if (cards.isNotEmpty()) {
+                BannerCarousel(cards)
+            }
+        }
+
+        item {
             FeaturedWorkoutSection(
                 todayPlanDay = uiState.todayPlanDay,
                 currentWeek = uiState.currentWeek,
@@ -251,12 +287,6 @@ private fun HomeContent(
                 unitSystem = uiState.unitSystem,
                 onWorkoutClick = onWorkoutClick
             )
-        }
-
-        if (cards.isNotEmpty()) {
-            item {
-                BannerCarousel(cards)
-            }
         }
 
         item {

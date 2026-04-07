@@ -29,11 +29,16 @@ object NotificationHelper {
         title: String,
         body: String,
         deepLink: String,
+        runId: String? = null,
+        planVersionId: String? = null,
         notificationId: Int = deepLink.hashCode(),
     ) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("deep_link", deepLink)
+            putExtra("body", body)
+            runId?.let { putExtra("run_id", it) }
+            planVersionId?.let { putExtra("plan_version_id", it) }
         }
         val pendingIntent = PendingIntent.getActivity(
             context,

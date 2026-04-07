@@ -101,7 +101,8 @@ fun PlanChangeScreen(
             is PlanChangeViewModel.ScreenState.Loaded -> PlanChangeContent(
                 record = state.record,
                 innerPadding = innerPadding,
-                onDismiss = { viewModel.markSeen(onDismiss) }
+                onDismiss = onDismiss,
+                onDiscussWithCoach = { viewModel.discussWithCoach(onDismiss) }
             )
         }
     }
@@ -111,7 +112,8 @@ fun PlanChangeScreen(
 private fun PlanChangeContent(
     record: DecisionRecord,
     innerPadding: PaddingValues,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onDiscussWithCoach: () -> Unit
 ) {
     var rationaleExpanded by rememberSaveable { mutableStateOf(false) }
 
@@ -218,6 +220,16 @@ private fun PlanChangeContent(
                 shape = RoundedCornerShape(CornerRadius.md)
             ) {
                 Text("Got it")
+            }
+        }
+
+        item {
+            Button(
+                onClick = onDiscussWithCoach,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(CornerRadius.md)
+            ) {
+                Text("Discuss with coach")
             }
         }
     }

@@ -3,6 +3,7 @@ package com.stridewell.app.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
+import com.stridewell.app.data.ActivityRepository
 import com.stridewell.app.data.AuthRepository
 import com.stridewell.app.data.ChatRepository
 import com.stridewell.app.data.OnboardingRepository
@@ -25,7 +26,8 @@ class LaunchViewModel @Inject constructor(
     private val onboardingRepository: OnboardingRepository,
     private val planRepository: PlanRepository,
     private val chatRepository: ChatRepository,
-    private val runsRepository: RunsRepository
+    private val runsRepository: RunsRepository,
+    private val activityRepository: ActivityRepository
 ) : ViewModel() {
 
     sealed class LaunchState {
@@ -52,6 +54,7 @@ class LaunchViewModel @Inject constructor(
                 planRepository.clearInMemoryState(clearSeenVersion = true)
                 chatRepository.clearInMemoryState(clearPersistedConversationId = true)
                 runsRepository.reset()
+                activityRepository.reset()
                 _state.value = LaunchState.Unauthenticated
                 return@launch
             }
@@ -82,6 +85,7 @@ class LaunchViewModel @Inject constructor(
                         planRepository.clearInMemoryState(clearSeenVersion = true)
                         chatRepository.clearInMemoryState(clearPersistedConversationId = true)
                         runsRepository.reset()
+                        activityRepository.reset()
                         _state.value = LaunchState.Unauthenticated
                     }
                 }

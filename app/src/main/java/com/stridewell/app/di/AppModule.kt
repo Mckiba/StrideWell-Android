@@ -42,6 +42,9 @@ private val Context.chatDataStore: DataStore<Preferences>
 private val Context.runsDataStore: DataStore<Preferences>
     by preferencesDataStore(name = "runs_prefs")
 
+private val Context.activityDataStore: DataStore<Preferences>
+    by preferencesDataStore(name = "activity_prefs")
+
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
@@ -144,6 +147,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): DataStore<Preferences> = context.runsDataStore
 
+    @Provides
+    @Singleton
+    @Named("activity")
+    fun provideActivityDataStore(
+        @ApplicationContext context: Context
+    ): DataStore<Preferences> = context.activityDataStore
+
     // ── OAuth ─────────────────────────────────────────────────────────────────
 
     /**
@@ -175,4 +185,13 @@ object AppModule {
     @Singleton
     @Named("notificationDeepLink")
     fun provideNotificationDeepLinkFlow(): MutableStateFlow<String?> = MutableStateFlow(null)
+
+    /**
+     * Shared message channel for opening Chat from Home/PlanChange with a pre-sent prompt.
+     * MainContainer consumes the message, switches to Chat tab, sends it once, then clears it.
+     */
+    @Provides
+    @Singleton
+    @Named("chatEntryMessage")
+    fun provideChatEntryMessageFlow(): MutableStateFlow<String?> = MutableStateFlow(null)
 }

@@ -200,6 +200,10 @@ class PlanRepository @Inject constructor(
         }
     }
 
+    fun setCurrentPlanVersionId(planVersionId: String?) {
+        _currentPlanVersionId.value = planVersionId
+    }
+
     suspend fun reset() = clearInMemoryState(clearSeenVersion = true)
 
     suspend fun clearInMemoryState(clearSeenVersion: Boolean = true) {
