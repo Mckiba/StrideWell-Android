@@ -138,6 +138,19 @@ fun ChatScreen(
             }
         }
 
+        if (uiState.isOffline) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Text(
+                    text = "Offline \u2014 viewing cached history, sending unavailable",
+                    modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         HorizontalDivider()
         ChatInputBar(
             value = uiState.inputText,

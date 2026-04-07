@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import retrofit2.Response
 
 @Singleton
@@ -29,8 +31,13 @@ class ChatRepository @Inject constructor(
 ) {
 
     companion object {
-        private val KEY_CONVERSATION_ID = stringPreferencesKey("chat_conversation_id")
+        private val KEY_CONVERSATION_ID  = stringPreferencesKey("chat_conversation_id")
+        private val KEY_CACHED_HISTORY   = stringPreferencesKey("chat_cached_history")
+        private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
     }
+
+    private val _isOffline = MutableStateFlow(false)
+    val isOffline: StateFlow<Boolean> = _isOffline.asStateFlow()
 
     private val _conversationId = MutableStateFlow<String?>(null)
     val conversationId: StateFlow<String?> = _conversationId.asStateFlow()
@@ -65,11 +72,13 @@ class ChatRepository @Inject constructor(
         _messages.value = emptyList()
         _hasMoreHistory.value = false
         _isLoadingHistory.value = false
+        _isOffline.value = false
         oldestCursor = null
 
         if (clearPersistedConversationId) {
             dataStore.edit { prefs ->
                 prefs.remove(KEY_CONVERSATION_ID)
+                prefs.remove(KEY_CACHED_HISTORY)
             }
         }
     }
@@ -81,10 +90,30 @@ class ChatRepository @Inject constructor(
         return try {
             when (val result = safeCall { chatApi.history(limit = limit, before = null) }) {
                 is ApiResult.Success -> {
+                    _isOffline.value = false
                     applyInitialHistory(result.data)
+                    dataStore.edit { it[KEY_CACHED_HISTORY] = json.encodeToString(result.data) }
                     ApiResult.Success(Unit)
                 }
-                is ApiResult.Error -> result
+                is ApiResult.Error -> {
+                    if (result.status == 0) {
+                        val stored = dataStore.data.first()[KEY_CACHED_HISTORY]
+                        val cached = stored?.let {
+                            runCatching { json.decodeFromString<ChatHistoryResponse>(it) }.getOrNull()
+                        }
+                        if (cached != null) {
+                            _isOffline.value = true
+                            applyInitialHistory(cached)
+                            ApiResult.Success(Unit)
+                        } else {
+                            _isOffline.value = false
+                            result
+                        }
+                    } else {
+                        _isOffline.value = false
+                        result
+                    }
+                }
             }
         } finally {
             _isLoadingHistory.value = false

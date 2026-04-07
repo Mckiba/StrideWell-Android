@@ -218,6 +218,22 @@ private fun HomeContent(
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
         contentPadding = PaddingValues(Spacing.md)
     ) {
+        if (uiState.isOffline) {
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Text(
+                        text = "Offline \u2014 viewing cached data",
+                        modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
         uiState.goalSummary?.let { goal ->
             item {
                 GoalCard(

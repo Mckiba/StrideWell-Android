@@ -9,6 +9,7 @@ import com.stridewell.app.data.AuthRepository
 import com.stridewell.app.data.ChatRepository
 import com.stridewell.app.data.OnboardingRepository
 import com.stridewell.app.data.PlanRepository
+import com.stridewell.app.data.RunsRepository
 import com.stridewell.app.data.SettingsRepository
 import com.stridewell.app.data.TokenStore
 import com.stridewell.app.model.StravaStatusResponse
@@ -38,6 +39,7 @@ class SettingsViewModel @Inject constructor(
     private val onboardingRepository: OnboardingRepository,
     private val planRepository: PlanRepository,
     private val chatRepository: ChatRepository,
+    private val runsRepository: RunsRepository,
     private val tokenStore: TokenStore,
     private val stravaApi: StravaApi,
     private val unauthorizedFlow: MutableSharedFlow<Unit>,
@@ -209,7 +211,8 @@ class SettingsViewModel @Inject constructor(
                 async { settingsRepository.reset() },
                 async { onboardingRepository.reset() },
                 async { planRepository.reset() },
-                async { chatRepository.reset() }
+                async { chatRepository.reset() },
+                async { runsRepository.reset() }
             ).awaitAll()
             unauthorizedFlow.tryEmit(Unit)
         }

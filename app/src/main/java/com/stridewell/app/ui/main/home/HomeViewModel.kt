@@ -46,7 +46,8 @@ class HomeViewModel @Inject constructor(
         val goalSummary: GoalSummary? = null,
         val recentRuns: List<Run> = emptyList(),
         val hasPlanChanged: Boolean = false,
-        val latestDecision: DecisionRecord? = null
+        val latestDecision: DecisionRecord? = null,
+        val isOffline: Boolean = false
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -79,6 +80,12 @@ class HomeViewModel @Inject constructor(
                 )
             }.collect { derived ->
                 _uiState.value = derived
+            }
+        }
+
+        viewModelScope.launch {
+            planRepository.isOffline.collect { offline ->
+                _uiState.update { it.copy(isOffline = offline) }
             }
         }
 

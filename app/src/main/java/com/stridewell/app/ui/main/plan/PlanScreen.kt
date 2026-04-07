@@ -71,6 +71,22 @@ fun PlanScreen(
                     verticalArrangement = Arrangement.spacedBy(Spacing.md),
                     contentPadding = PaddingValues(Spacing.md)
                 ) {
+                    if (uiState.isOffline) {
+                        item {
+                            androidx.compose.material3.Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = "Offline \u2014 viewing cached data",
+                                    modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
                     if (uiState.hasPlanChanged) {
                         item {
                             androidx.compose.material3.Surface(

@@ -38,6 +38,9 @@ private val Context.planDataStore: DataStore<Preferences>
 private val Context.chatDataStore: DataStore<Preferences>
     by preferencesDataStore(name = "chat_prefs")
 
+private val Context.runsDataStore: DataStore<Preferences>
+    by preferencesDataStore(name = "runs_prefs")
+
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
@@ -127,6 +130,13 @@ object AppModule {
     fun provideChatDataStore(
         @ApplicationContext context: Context
     ): DataStore<Preferences> = context.chatDataStore
+
+    @Provides
+    @Singleton
+    @Named("runs")
+    fun provideRunsDataStore(
+        @ApplicationContext context: Context
+    ): DataStore<Preferences> = context.runsDataStore
 
     // ── OAuth ─────────────────────────────────────────────────────────────────
 

@@ -36,10 +36,11 @@ class ChatViewModel @Inject constructor(
         val isWaitingReply: Boolean = false,
         val errorMessage: String? = null,
         val hasMoreHistory: Boolean = false,
-        val isLoadingHistory: Boolean = false
+        val isLoadingHistory: Boolean = false,
+        val isOffline: Boolean = false
     ) {
         val canSend: Boolean
-            get() = inputText.trim().isNotEmpty() && !isWaitingReply
+            get() = inputText.trim().isNotEmpty() && !isWaitingReply && !isOffline
     }
 
     private val _uiState = MutableStateFlow(UiState())
@@ -64,6 +65,12 @@ class ChatViewModel @Inject constructor(
                         isLoadingHistory = isLoadingHistory
                     )
                 }
+            }
+        }
+
+        viewModelScope.launch {
+            chatRepository.isOffline.collect { offline ->
+                _uiState.update { it.copy(isOffline = offline) }
             }
         }
 

@@ -44,7 +44,8 @@ class PlanViewModel @Inject constructor(
         val selectedDay: PlanDay? = null,
         val unitSystem: UnitSystem = UnitSystem.METRIC,
         val hasPlanChanged: Boolean = false,
-        val isRefreshing: Boolean = false
+        val isRefreshing: Boolean = false,
+        val isOffline: Boolean = false
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -55,10 +56,9 @@ class PlanViewModel @Inject constructor(
             combine(
                 settingsRepository.unitSystem,
                 planRepository.planUpdated,
-                planRepository.currentWeek
-            ) { unitSystem, hasPlanChanged, refreshedCurrentWeek ->
-                Triple(unitSystem, hasPlanChanged, refreshedCurrentWeek)
-            }.collect { (unitSystem, hasPlanChanged, refreshedCurrentWeek) ->
+                planRepository.currentWeek,
+                planRepository.isOffline
+            ) { unitSystem, hasPlanChanged, refreshedCurrentWeek, isOffline ->
                 _uiState.update {
                     val selectedWeekStart = DateUtils.format(it.selectedMonday)
                     val syncedDisplayedWeek = if (
@@ -74,13 +74,13 @@ class PlanViewModel @Inject constructor(
                         syncedDisplayedWeek.days.isEmpty() -> ScreenState.Empty
                         else -> ScreenState.Loaded
                     }
-                    it.copy(unitSystem = unitSystem, hasPlanChanged = hasPlanChanged)
+                    it.copy(unitSystem = unitSystem, hasPlanChanged = hasPlanChanged, isOffline = isOffline)
                         .copy(
                             displayedWeek = syncedDisplayedWeek,
                             screenState = syncedScreenState
                         )
                 }
-            }
+            }.collect {}
         }
         loadWeek(DateUtils.mondayOfWeek(containing = Date()))
     }

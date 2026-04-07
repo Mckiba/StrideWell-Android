@@ -7,6 +7,7 @@ import com.stridewell.app.data.AuthRepository
 import com.stridewell.app.data.ChatRepository
 import com.stridewell.app.data.OnboardingRepository
 import com.stridewell.app.data.PlanRepository
+import com.stridewell.app.data.RunsRepository
 import com.stridewell.app.data.TokenStore
 import com.stridewell.app.navigation.Route
 import com.stridewell.app.model.OnboardingStatus
@@ -23,7 +24,8 @@ class LaunchViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val onboardingRepository: OnboardingRepository,
     private val planRepository: PlanRepository,
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val runsRepository: RunsRepository
 ) : ViewModel() {
 
     sealed class LaunchState {
@@ -49,6 +51,7 @@ class LaunchViewModel @Inject constructor(
             if (tokenStore.getToken() == null) {
                 planRepository.clearInMemoryState(clearSeenVersion = true)
                 chatRepository.clearInMemoryState(clearPersistedConversationId = true)
+                runsRepository.reset()
                 _state.value = LaunchState.Unauthenticated
                 return@launch
             }
@@ -65,11 +68,22 @@ class LaunchViewModel @Inject constructor(
                     }
                 }
                 is ApiResult.Error -> {
-                    // 401 or network error — treat as unauthenticated
-                    tokenStore.clearToken()
-                    planRepository.clearInMemoryState(clearSeenVersion = true)
-                    chatRepository.clearInMemoryState(clearPersistedConversationId = true)
-                    _state.value = LaunchState.Unauthenticated
+                    if (result.status == 0) {
+                        // Network error — token is still valid, route from persisted state
+                        val onboardingDone = onboardingRepository.isOnboardingComplete()
+                        _state.value = if (onboardingDone) {
+                            LaunchState.Authenticated
+                        } else {
+                            LaunchState.NeedsOnboarding(Route.IntakeInterview.path)
+                        }
+                    } else {
+                        // 401 or other auth error — token rejected, force sign-in
+                        tokenStore.clearToken()
+                        planRepository.clearInMemoryState(clearSeenVersion = true)
+                        chatRepository.clearInMemoryState(clearPersistedConversationId = true)
+                        runsRepository.reset()
+                        _state.value = LaunchState.Unauthenticated
+                    }
                 }
             }
         }
