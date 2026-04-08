@@ -15,6 +15,7 @@ import com.stridewell.app.data.SettingsRepository
 import com.stridewell.app.data.TokenStore
 import com.stridewell.app.model.StravaStatusResponse
 import com.stridewell.app.model.goalName
+import com.stridewell.app.ui.background.heatmap.HeatmapCache
 import com.stridewell.app.util.AppTheme
 import com.stridewell.app.util.DateUtils
 import com.stridewell.app.util.StravaOAuthHelper
@@ -43,6 +44,7 @@ class SettingsViewModel @Inject constructor(
     private val runsRepository: RunsRepository,
     private val activityRepository: ActivityRepository,
     private val tokenStore: TokenStore,
+    private val heatmapCache: HeatmapCache,
     private val stravaApi: StravaApi,
     private val unauthorizedFlow: MutableSharedFlow<Unit>,
     @Named("oauthCode") private val oauthCodeFlow: MutableStateFlow<String?>
@@ -208,6 +210,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onSignOut() {
         viewModelScope.launch {
+            tokenStore.getUserId()?.let { heatmapCache.clearAll(it) }
             tokenStore.clearToken()
             listOf(
                 async { settingsRepository.reset() },
@@ -237,12 +240,14 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = authRepository.deleteAccount()) {
                 is ApiResult.Success -> {
+                    tokenStore.getUserId()?.let { heatmapCache.clearAll(it) }
                     tokenStore.clearToken()
                     listOf(
                         async { settingsRepository.reset() },
                         async { onboardingRepository.reset() },
                         async { planRepository.reset() },
                         async { chatRepository.reset() },
+                        async { runsRepository.reset() },
                         async { activityRepository.reset() }
                     ).awaitAll()
                     unauthorizedFlow.tryEmit(Unit)

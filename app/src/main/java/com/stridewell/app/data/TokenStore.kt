@@ -30,12 +30,22 @@ class TokenStore @Inject constructor(@ApplicationContext context: Context) {
 
     fun getToken(): String? = prefs.getString(KEY_JWT, null)
 
+    fun saveUserId(userId: String) {
+        prefs.edit().putString(KEY_USER_ID, userId).apply()
+    }
+
+    fun getUserId(): String? = prefs.getString(KEY_USER_ID, null)
+
     fun clearToken() {
-        prefs.edit().remove(KEY_JWT).apply()
+        prefs.edit()
+            .remove(KEY_JWT)
+            .remove(KEY_USER_ID)
+            .apply()
     }
 
     companion object {
         private const val PREFS_FILE = "stridewell_secure_prefs"
         private const val KEY_JWT    = "jwt"
+        private const val KEY_USER_ID = "user_id"
     }
 }

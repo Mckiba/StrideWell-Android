@@ -59,6 +59,7 @@ class SignUpViewModel @Inject constructor(
                     chatRepository.clearInMemoryState(clearPersistedConversationId = true)
                     activityRepository.reset()
                     tokenStore.saveToken(result.data.token)
+                    tokenStore.saveUserId(result.data.user_id)
                 }
             }
 

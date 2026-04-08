@@ -25,6 +25,7 @@ class SettingsRepository @Inject constructor(
         private val KEY_APP_THEME            = stringPreferencesKey("settings_app_theme")
         private val KEY_REFLECTION_REMINDERS = booleanPreferencesKey("settings_reflection_reminders")
         private val KEY_PLAN_UPDATE_ALERTS   = booleanPreferencesKey("settings_plan_update_alerts")
+        private val KEY_HOME_HEATMAP_ONLY    = booleanPreferencesKey("settings_home_heatmap_only")
     }
 
     val unitSystem: Flow<UnitSystem> = dataStore.data.map { prefs ->
@@ -41,6 +42,10 @@ class SettingsRepository @Inject constructor(
 
     val planUpdateAlerts: Flow<Boolean> = dataStore.data.map { prefs ->
         prefs[KEY_PLAN_UPDATE_ALERTS] ?: true
+    }
+
+    val homeHeatmapOnly: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_HOME_HEATMAP_ONLY] ?: false
     }
 
     suspend fun getUnitSystem(): UnitSystem =
@@ -64,12 +69,17 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_PLAN_UPDATE_ALERTS] = enabled }
     }
 
+    suspend fun setHomeHeatmapOnly(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[KEY_HOME_HEATMAP_ONLY] = enabled }
+    }
+
     suspend fun reset() {
         dataStore.edit { prefs ->
             prefs.remove(KEY_UNIT_SYSTEM)
             prefs.remove(KEY_APP_THEME)
             prefs.remove(KEY_REFLECTION_REMINDERS)
             prefs.remove(KEY_PLAN_UPDATE_ALERTS)
+            prefs.remove(KEY_HOME_HEATMAP_ONLY)
         }
     }
 

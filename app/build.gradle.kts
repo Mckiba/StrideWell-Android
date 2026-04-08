@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+val googleMapsStaticApiKey =
+    (project.findProperty("GOOGLE_MAPS_STATIC_API_KEY") as String?) ?: "AIzaSyCPkTIFGiek4UUaEKDV-mVDgEBGRnys45s"
+
 android {
     namespace = "com.stridewell"
     compileSdk {
@@ -36,6 +39,7 @@ android {
             buildConfigField("String", "APPLE_CLIENT_ID",      "\"com.stridewell.service\"")
             // Backend relay receives Apple's form_post then redirects to this deep link
             buildConfigField("String", "APPLE_REDIRECT_URI",   "\"stridewell://oauth/apple/callback\"")
+            buildConfigField("String", "GOOGLE_MAPS_STATIC_API_KEY", "\"AIzaSyCPkTIFGiek4UUaEKDV-mVDgEBGRnys45s\"")
         }
         release {
             isMinifyEnabled = false
@@ -49,6 +53,7 @@ android {
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"72822339247-lvn41ic0uubh3ol1gr55gq923fusm9sj.apps.googleusercontent.com\"")
             buildConfigField("String", "APPLE_CLIENT_ID",      "\"com.stridewell.service\"")
             buildConfigField("String", "APPLE_REDIRECT_URI",   "\"stridewell://oauth/apple/callback\"")
+            buildConfigField("String", "GOOGLE_MAPS_STATIC_API_KEY", "\"AIzaSyCPkTIFGiek4UUaEKDV-mVDgEBGRnys45s\"")
         }
     }
 
@@ -76,6 +81,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
@@ -110,6 +116,7 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
+    implementation(libs.play.services.location)
 
     // Splash Screen
     implementation(libs.androidx.core.splashscreen)

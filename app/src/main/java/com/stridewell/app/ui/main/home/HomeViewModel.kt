@@ -59,7 +59,8 @@ class HomeViewModel @Inject constructor(
         val latestDecision: DecisionRecord? = null,
         val showActivityBanner: Boolean = false,
         val latestSyncedRunId: String? = null,
-        val isOffline: Boolean = false
+        val isOffline: Boolean = false,
+        val showHeatmapOnly: Boolean = false
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -85,9 +86,10 @@ class HomeViewModel @Inject constructor(
 
             combine(
                 baseInputs,
+                settingsRepository.homeHeatmapOnly,
                 activityRepository.showActivityBanner,
                 activityRepository.lastSyncedRunId
-            ) { base, showActivityBanner, syncedRunId ->
+            ) { base, showHeatmapOnly, showActivityBanner, syncedRunId ->
                 val week = base.week
                 val nextWeekStart = week?.start_date
                     ?.let(DateUtils::parse)
@@ -106,7 +108,8 @@ class HomeViewModel @Inject constructor(
                     latestDecision = _uiState.value.latestDecision,
                     showActivityBanner = showActivityBanner,
                     latestSyncedRunId = syncedRunId,
-                    isOffline = _uiState.value.isOffline
+                    isOffline = _uiState.value.isOffline,
+                    showHeatmapOnly = showHeatmapOnly
                 )
             }.collect { derived ->
                 _uiState.value = derived
@@ -138,6 +141,12 @@ class HomeViewModel @Inject constructor(
     fun dismissPlanChangeBanner() {
         viewModelScope.launch {
             planRepository.markPlanChangeSeen()
+        }
+    }
+
+    fun toggleHeatmapOnly() {
+        viewModelScope.launch {
+            settingsRepository.setHomeHeatmapOnly(!_uiState.value.showHeatmapOnly)
         }
     }
 

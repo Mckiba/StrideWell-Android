@@ -13,33 +13,44 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.stridewell.R
 import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.model.PlanDay
 import com.stridewell.app.model.PlanWeekResponse
 import com.stridewell.app.model.Run
 import com.stridewell.app.model.WorkoutType
+import com.stridewell.app.ui.background.heatmap.HeatmapBackgroundView
+import com.stridewell.app.ui.background.heatmap.HeatmapViewModel
+import com.stridewell.app.ui.background.weather.StormOverlayView
+import com.stridewell.app.ui.background.weather.WeatherViewModel
 import com.stridewell.app.ui.components.ActivityCard
 import com.stridewell.app.ui.components.ActivityBannerView
 import com.stridewell.app.ui.components.GoalCard
@@ -61,39 +72,84 @@ private data class BannerCardData(
 fun HomeScreen(
     onOpenPlanChange: (DecisionRecord?) -> Unit,
     onOpenChatWithMessage: (String) -> Unit,
+    hasLocationPermission: Boolean,
+    heatmapViewModel: HeatmapViewModel,
+    weatherViewModel: WeatherViewModel,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val weatherState by weatherViewModel.uiState.collectAsStateWithLifecycle()
+    val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
     var selectedWorkout by remember { mutableStateOf<PlanDay?>(null) }
     var showReflection by remember { mutableStateOf(false) }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
-        when (val screenState = uiState.screenState) {
-            HomeViewModel.ScreenState.Loading -> HomeLoading(innerPadding)
-            HomeViewModel.ScreenState.Empty -> HomeEmpty(innerPadding)
-            is HomeViewModel.ScreenState.Error -> HomeError(
-                message = screenState.message,
-                innerPadding = innerPadding,
-                onRetry = viewModel::refresh
+    Box(modifier = modifier.fillMaxSize()) {
+        HeatmapBackgroundView(
+            hasLocationPermission = hasLocationPermission,
+            isDarkTheme = isDarkTheme,
+            heatmapViewModel = heatmapViewModel
+        )
+        if (!uiState.showHeatmapOnly) {
+            StormOverlayView(
+                condition = weatherState.activeCondition,
+                modifier = Modifier.fillMaxSize()
             )
-            HomeViewModel.ScreenState.Loaded -> HomeContent(
-                uiState = uiState,
-                innerPadding = innerPadding,
-                onOpenPlanChange = onOpenPlanChange,
-                onDismissPlanChangeBanner = viewModel::dismissPlanChangeBanner,
-                onOpenChatWithMessage = onOpenChatWithMessage,
-                onDismissActivityBanner = viewModel::dismissActivityBanner,
-                onOpenReflection = { showReflection = true },
-                onWorkoutClick = { selectedWorkout = it }
+        }
+
+        if (!uiState.showHeatmapOnly) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = Color.Transparent
+            ) { innerPadding ->
+                when (val screenState = uiState.screenState) {
+                    HomeViewModel.ScreenState.Loading -> HomeLoading(innerPadding)
+                    HomeViewModel.ScreenState.Empty -> HomeEmpty(innerPadding)
+                    is HomeViewModel.ScreenState.Error -> HomeError(
+                        message = screenState.message,
+                        innerPadding = innerPadding,
+                        onRetry = viewModel::refresh
+                    )
+                    HomeViewModel.ScreenState.Loaded -> HomeContent(
+                        uiState = uiState,
+                        innerPadding = innerPadding,
+                        onOpenPlanChange = onOpenPlanChange,
+                        onDismissPlanChangeBanner = viewModel::dismissPlanChangeBanner,
+                        onOpenChatWithMessage = onOpenChatWithMessage,
+                        onDismissActivityBanner = viewModel::dismissActivityBanner,
+                        onOpenReflection = { showReflection = true },
+                        onWorkoutClick = { selectedWorkout = it }
+                    )
+                }
+            }
+        }
+
+        FloatingActionButton(
+            onClick = {
+                if (!uiState.showHeatmapOnly) {
+                    selectedWorkout = null
+                    showReflection = false
+                }
+                viewModel.toggleHeatmapOnly()
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 24.dp),
+            containerColor = Color.Black.copy(alpha = 0.45f),
+            contentColor = Color.White
+        ) {
+            Icon(
+                imageVector = if (uiState.showHeatmapOnly) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                contentDescription = if (uiState.showHeatmapOnly) {
+                    "Show dashboard"
+                } else {
+                    "Show background only"
+                }
             )
         }
     }
 
-    selectedWorkout?.let { workout ->
+    if (!uiState.showHeatmapOnly) selectedWorkout?.let { workout ->
         ModalBottomSheet(
             onDismissRequest = { selectedWorkout = null }
         ) {
@@ -104,12 +160,22 @@ fun HomeScreen(
         }
     }
 
-    if (showReflection) {
+    if (!uiState.showHeatmapOnly && showReflection) {
         ModalBottomSheet(
             onDismissRequest = { showReflection = false }
         ) {
             ReflectionScreen(onDismiss = { showReflection = false })
         }
+    }
+
+    LaunchedEffect(uiState.latestSyncedRunId, uiState.showActivityBanner, isDarkTheme) {
+        if (uiState.showActivityBanner && !uiState.latestSyncedRunId.isNullOrBlank()) {
+            heatmapViewModel.invalidateAndRegenerate(isDark = isDarkTheme)
+        }
+    }
+
+    LaunchedEffect(hasLocationPermission) {
+        weatherViewModel.fetchIfNeeded(hasLocationPermission)
     }
 }
 

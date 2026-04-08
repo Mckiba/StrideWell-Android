@@ -44,11 +44,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stridewell.app.model.Run
+import com.stridewell.app.ui.background.heatmap.HeatmapBackgroundView
+import com.stridewell.app.ui.background.heatmap.HeatmapViewModel
+import com.stridewell.app.ui.background.weather.StormOverlayView
+import com.stridewell.app.ui.background.weather.WeatherViewModel
 import com.stridewell.app.ui.components.ActivityCard
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.util.DateUtils
@@ -61,128 +67,146 @@ import java.util.TimeZone
 @Composable
 fun ActivitiesScreen(
     onNavigateToDetail: (Run) -> Unit,
+    hasLocationPermission: Boolean,
+    heatmapViewModel: HeatmapViewModel,
+    weatherViewModel: WeatherViewModel,
     modifier: Modifier = Modifier,
     viewModel: ActivitiesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val weatherState by weatherViewModel.uiState.collectAsStateWithLifecycle()
+    val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
     var showDatePicker by remember { mutableStateOf(false) }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                DateFilterChip(
-                    selectedDate = uiState.selectedDate,
-                    onClick = { showDatePicker = true },
-                    onClear = { viewModel.onDateSelected(null) }
-                )
-            }
+    Box(modifier = modifier.fillMaxSize()) {
+        HeatmapBackgroundView(
+            hasLocationPermission = hasLocationPermission,
+            isDarkTheme = isDarkTheme,
+            heatmapViewModel = heatmapViewModel
+        )
+        StormOverlayView(
+            condition = weatherState.activeCondition,
+            modifier = Modifier.fillMaxSize()
+        )
 
-            // Search field
-            OutlinedTextField(
-                value = uiState.searchQuery,
-                onValueChange = viewModel::onSearchQueryChanged,
-                placeholder = { Text("Search activities") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                trailingIcon = {
-                    if (uiState.searchQuery.isNotBlank()) {
-                        IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear search"
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(50),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent
+        ) { innerPadding ->
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.md, vertical = Spacing.xs)
-            )
-
-            // Content
-            when (val state = uiState.screenState) {
-                ActivitiesViewModel.ScreenState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    DateFilterChip(
+                        selectedDate = uiState.selectedDate,
+                        onClick = { showDatePicker = true },
+                        onClear = { viewModel.onDateSelected(null) }
+                    )
                 }
-                ActivitiesViewModel.ScreenState.Empty -> {
-                    val hasFilters = uiState.searchQuery.isNotBlank() || uiState.selectedDate != null
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(Spacing.lg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+
+                // Search field
+                OutlinedTextField(
+                    value = uiState.searchQuery,
+                    onValueChange = viewModel::onSearchQueryChanged,
+                    placeholder = { Text("Search activities") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingIcon = {
+                        if (uiState.searchQuery.isNotBlank()) {
+                            IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Clear search"
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(50),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.md, vertical = Spacing.xs)
+                )
+
+                // Content
+                when (val state = uiState.screenState) {
+                    ActivitiesViewModel.ScreenState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = if (hasFilters) "No activities found" else "No activities yet",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = if (hasFilters)
-                                    "Try a different search or date."
-                                else
-                                    "Connect Strava to see your activities",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            CircularProgressIndicator()
                         }
                     }
-                }
-                is ActivitiesViewModel.ScreenState.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(Spacing.lg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                    ActivitiesViewModel.ScreenState.Empty -> {
+                        val hasFilters = uiState.searchQuery.isNotBlank() || uiState.selectedDate != null
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(Spacing.lg),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = state.message,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            Button(onClick = viewModel::refresh) {
-                                Text("Retry")
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+                            ) {
+                                Text(
+                                    text = if (hasFilters) "No activities found" else "No activities yet",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (hasFilters)
+                                        "Try a different search or date."
+                                    else
+                                        "Connect Strava to see your activities",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }
-                }
-                ActivitiesViewModel.ScreenState.Loaded -> {
-                    ActivitiesContent(
-                        uiState = uiState,
-                        onCardClick = onNavigateToDetail,
-                        onRefresh = viewModel::refresh,
-                        onLoadMore = viewModel::loadMore
-                    )
+                    is ActivitiesViewModel.ScreenState.Error -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(Spacing.lg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                            ) {
+                                Text(
+                                    text = state.message,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                                Button(onClick = viewModel::refresh) {
+                                    Text("Retry")
+                                }
+                            }
+                        }
+                    }
+                    ActivitiesViewModel.ScreenState.Loaded -> {
+                        ActivitiesContent(
+                            uiState = uiState,
+                            onCardClick = onNavigateToDetail,
+                            onRefresh = viewModel::refresh,
+                            onLoadMore = viewModel::loadMore
+                        )
+                    }
                 }
             }
         }
@@ -219,6 +243,10 @@ fun ActivitiesScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    LaunchedEffect(hasLocationPermission) {
+        weatherViewModel.fetchIfNeeded(hasLocationPermission)
     }
 }
 

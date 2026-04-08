@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.api.RunsApi
+import com.stridewell.app.model.HeatmapResponse
 import com.stridewell.app.model.RecentRunsResponse
 import com.stridewell.app.util.DateUtils
 import java.io.IOException
@@ -73,6 +74,9 @@ class RunsRepository @Inject constructor(
             else -> result
         }
     }
+
+    suspend fun heatmap(): ApiResult<HeatmapResponse> =
+        safeCall { runsApi.heatmap() }
 
     suspend fun reset() {
         dataStore.edit { prefs ->

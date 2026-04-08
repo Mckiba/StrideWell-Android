@@ -157,6 +157,7 @@ class SocialAuthViewModel @Inject constructor(
                 chatRepository.clearInMemoryState(clearPersistedConversationId = true)
                 activityRepository.reset()
                 tokenStore.saveToken(result.data.token)
+                tokenStore.saveUserId(result.data.user_id)
                 val meResult = authRepository.me()
                 val onboardingStatus = when (meResult) {
                     is ApiResult.Success -> {
