@@ -26,6 +26,7 @@ firebaseBom               = "33.7.0"
 credentials               = "1.5.0"
 googleid                  = "1.1.1"
 playServicesLocation      = "21.3.0"
+haze                      = "1.5.3"
 
 [libraries]
 # AndroidX core
@@ -86,6 +87,7 @@ androidx-credentials                      = { group = "androidx.credentials",   
 androidx-credentials-play-services-auth   = { group = "androidx.credentials",                                    name = "credentials-play-services-auth", version.ref = "credentials" }
 googleid                                  = { group = "com.google.android.libraries.identity.googleid",          name = "googleid",                       version.ref = "googleid" }
 play-services-location                    = { group = "com.google.android.gms",                                    name = "play-services-location",         version.ref = "playServicesLocation" }
+haze                                      = { module = "dev.chrisbanes.haze:haze",                                                                            version.ref = "haze" }
 
 # Testing
 junit                                = { group = "junit",                      name = "junit",                                      version.ref = "junit" }

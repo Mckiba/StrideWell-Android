@@ -118,6 +118,9 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.play.services.location)
 
+    // Haze (frosted glass blur)
+    implementation(libs.haze)
+
     // Splash Screen
     implementation(libs.androidx.core.splashscreen)
 

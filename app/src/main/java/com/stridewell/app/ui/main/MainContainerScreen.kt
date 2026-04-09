@@ -11,13 +11,10 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,17 +22,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.model.Run
+import com.stridewell.app.model.StormCondition
 import com.stridewell.app.ui.background.heatmap.HeatmapViewModel
 import com.stridewell.app.ui.background.weather.ResidueView
 import com.stridewell.app.ui.background.weather.StormContents
@@ -46,10 +43,12 @@ import com.stridewell.app.ui.main.home.HomeScreen
 import com.stridewell.app.ui.main.chat.ChatScreen
 import com.stridewell.app.ui.main.plan.PlanScreen
 import com.stridewell.app.ui.main.settings.SettingsScreen
-import kotlinx.coroutines.flow.collect
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 
-private enum class MainTab(
+enum class MainTab(
     val label: String,
     val icon: ImageVector
 ) {
@@ -72,6 +71,7 @@ fun MainContainerScreen(
     val context = LocalContext.current
     val heatmapViewModel: HeatmapViewModel = hiltViewModel()
     val weatherViewModel: WeatherViewModel = hiltViewModel()
+    val hazeState = remember { HazeState() }
 
     var hasLocationPermission by remember {
         mutableStateOf(
@@ -117,27 +117,21 @@ fun MainContainerScreen(
         weatherViewModel.fetchIfNeeded(hasLocationPermission)
     }
 
-    Scaffold(
-        modifier = modifier,
-        bottomBar = {
-            NavigationBar {
-                MainTab.entries.forEach { tab ->
-                    NavigationBarItem(
-                        selected = selectedTab == tab,
-                        onClick = { selectedTab = tab },
-                        icon = {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = tab.label
-                            )
-                        },
-                        label = { Text(tab.label) }
-                    )
-                }
-            }
-        }
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
+    // hazeSource and hazeEffect must be SIBLINGS inside a Box — not parent/child.
+    // hazeSource is on the content Box: it captures the full-screen render (heatmap,
+    // cards, etc.) right up to the edges, including the area behind the nav bar.
+    // GlassNavBar (hazeEffect) is a sibling overlaid on top — it reads those pixels
+    // and blurs them through the frosted pill shape.
+    Box(modifier = modifier.fillMaxSize()) {
+
+        // ── Content (hazeSource) ──────────────────────────────────────────────────
+        // Fills the full screen with no bottom padding — screens draw into the region
+        // behind the nav bar so the glass has real pixels to blur.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(hazeState)
+        ) {
             when (selectedTab) {
                 MainTab.Home -> HomeScreen(
                     onOpenPlanChange = onOpenPlanChange,
@@ -171,23 +165,32 @@ fun MainContainerScreen(
                     modifier = Modifier
                 )
             }
-
-            if (weatherState.activeCondition != com.stridewell.app.model.StormCondition.CLEAR) {
-                val type = if (weatherState.activeCondition == com.stridewell.app.model.StormCondition.RAIN) {
-                    StormContents.RAIN
-                } else {
-                    StormContents.SNOW
-                }
-                val strength = if (type == StormContents.RAIN) 250f else 150f
-                ResidueView(
-                    type = type,
-                    strength = strength,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(120.dp)
-                )
-            }
         }
+
+        // ── Weather residue ───────────────────────────────────────────────────────
+        if (weatherState.activeCondition != StormCondition.CLEAR) {
+            val type = if (weatherState.activeCondition == StormCondition.RAIN) {
+                StormContents.RAIN
+            } else {
+                StormContents.SNOW
+            }
+            val strength = if (type == StormContents.RAIN) 250f else 150f
+            ResidueView(
+                type = type,
+                strength = strength,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(120.dp)
+            )
+        }
+
+        // ── Glass nav bar (hazeEffect sibling) ───────────────────────────────────
+        GlassNavBar(
+            selectedTab = selectedTab,
+            onTabSelected = { selectedTab = it },
+            hazeState = hazeState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
