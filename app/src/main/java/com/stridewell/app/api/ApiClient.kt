@@ -12,6 +12,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.ExperimentalSerializationApi
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 /** Attaches the JWT Bearer token to every outgoing request. */
@@ -25,6 +26,21 @@ class AuthInterceptor(private val tokenStore: TokenStore) : Interceptor {
         } else {
             chain.request()
         }
+        return chain.proceed(request)
+    }
+}
+
+/**
+ * Attaches the device's IANA timezone to every outgoing request so backend
+ * code can resolve "today" in the user's local calendar instead of UTC.
+ * Without this, west-of-UTC users at late evening lose a day of plan
+ * windowing (e.g. adjuster's firstDay jumps two calendar days ahead locally).
+ */
+class TimezoneInterceptor : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val request = chain.request().newBuilder()
+            .addHeader("X-Timezone", TimeZone.getDefault().id)
+            .build()
         return chain.proceed(request)
     }
 }
@@ -84,6 +100,7 @@ fun buildOkHttpClient(
     }
     return OkHttpClient.Builder()
         .addInterceptor(AuthInterceptor(tokenStore))
+        .addInterceptor(TimezoneInterceptor())
         .addInterceptor(UnauthorizedInterceptor(unauthorizedFlow))
         .addInterceptor(logging)
         .callTimeout(120, TimeUnit.SECONDS)
