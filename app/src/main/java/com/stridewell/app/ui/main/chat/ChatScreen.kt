@@ -40,10 +40,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stridewell.app.model.ChatMessage
+import com.stridewell.app.model.FeedbackVote
 import com.stridewell.app.model.InterviewMessage
 import com.stridewell.app.model.InterviewMessageRole
 import com.stridewell.app.model.MessageRole
 import com.stridewell.app.ui.components.MessageBubble
+import com.stridewell.app.ui.components.MessageFeedbackRow
 import com.stridewell.app.ui.components.TypingIndicator
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
@@ -131,6 +133,12 @@ fun ChatScreen(
                     uiState = uiState,
                     listState = listState,
                     onRetry = viewModel::retryError,
+                    onVote = { messageId, vote ->
+                        viewModel.submitFeedback(messageId, vote, comment = null)
+                    },
+                    onCommentSubmit = { messageId, comment ->
+                        viewModel.submitFeedback(messageId, FeedbackVote.down, comment)
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
@@ -221,6 +229,8 @@ private fun ConversationThread(
     uiState: ChatViewModel.UiState,
     listState: androidx.compose.foundation.lazy.LazyListState,
     onRetry: () -> Unit,
+    onVote: (String, FeedbackVote) -> Unit,
+    onCommentSubmit: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -251,7 +261,11 @@ private fun ConversationThread(
             items = uiState.messages.asReversed(),
             key = { message -> message.id }
         ) { message ->
-            ChatMessageRow(message = message)
+            ChatMessageRow(
+                message = message,
+                onVote = onVote,
+                onCommentSubmit = onCommentSubmit
+            )
         }
 
         if (uiState.isLoadingHistory) {
@@ -268,22 +282,35 @@ private fun ConversationThread(
 }
 
 @Composable
-private fun ChatMessageRow(message: ChatMessage) {
+private fun ChatMessageRow(
+    message: ChatMessage,
+    onVote: (String, FeedbackVote) -> Unit,
+    onCommentSubmit: (String, String) -> Unit
+) {
     val role = if (message.role == MessageRole.user) {
         InterviewMessageRole.user
     } else {
         InterviewMessageRole.assistant
     }
-    MessageBubble(
-        message = InterviewMessage(
-            id = message.id,
-            role = role,
-            content = message.content,
-            agent_used = message.agent_used?.name,
-            created_at = message.created_at
-        ),
-        subtitle = if (message.role == MessageRole.assistant) message.agent_used?.name else null
-    )
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        MessageBubble(
+            message = InterviewMessage(
+                id = message.id,
+                role = role,
+                content = message.content,
+                agent_used = message.agent_used?.name,
+                created_at = message.created_at
+            ),
+            subtitle = if (message.role == MessageRole.assistant) message.agent_used?.name else null
+        )
+        if (message.role == MessageRole.assistant) {
+            MessageFeedbackRow(
+                feedback = message.feedback,
+                onVote = { vote -> onVote(message.id, vote) },
+                onCommentSubmit = { comment -> onCommentSubmit(message.id, comment) }
+            )
+        }
+    }
 }
 
 @Composable

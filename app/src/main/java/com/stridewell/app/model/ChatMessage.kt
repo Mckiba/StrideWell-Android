@@ -13,12 +13,33 @@ enum class AgentUsed {
 }
 
 @Serializable
+enum class FeedbackVote { up, down }
+
+@Serializable
+data class MessageFeedback(
+    val vote: FeedbackVote,
+    val comment: String? = null
+)
+
+@Serializable
 data class ChatMessage(
     val id: String,
     val role: MessageRole,
     val content: String,
     val agent_used: AgentUsed? = null,
-    val created_at: String
+    val created_at: String,
+    val feedback: MessageFeedback? = null
+)
+
+@Serializable
+data class FeedbackRequest(
+    val vote: String,
+    val comment: String? = null
+)
+
+@Serializable
+data class FeedbackResponse(
+    val stored: Boolean
 )
 
 @Serializable

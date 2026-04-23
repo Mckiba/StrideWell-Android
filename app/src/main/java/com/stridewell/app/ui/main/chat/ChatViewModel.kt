@@ -7,6 +7,7 @@ import com.stridewell.app.data.ChatRepository
 import com.stridewell.app.data.PlanRepository
 import com.stridewell.app.model.AgentUsed
 import com.stridewell.app.model.ChatMessage
+import com.stridewell.app.model.FeedbackVote
 import com.stridewell.app.model.MessageRole
 import com.stridewell.app.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -188,6 +189,16 @@ class ChatViewModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Submit thumbs up/down (+ optional comment) for an assistant message.
+     * Repository handles optimistic update + rollback; nothing to update on UiState.
+     */
+    fun submitFeedback(messageId: String, vote: FeedbackVote, comment: String?) {
+        viewModelScope.launch {
+            chatRepository.submitFeedback(messageId, vote, comment)
         }
     }
 

@@ -10,6 +10,10 @@ import com.stridewell.app.model.ChatHistoryResponse
 import com.stridewell.app.model.ChatMessage
 import com.stridewell.app.model.ChatMessageRequest
 import com.stridewell.app.model.ChatMessageResponse
+import com.stridewell.app.model.FeedbackRequest
+import com.stridewell.app.model.FeedbackResponse
+import com.stridewell.app.model.FeedbackVote
+import com.stridewell.app.model.MessageFeedback
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeoutException
@@ -156,6 +160,49 @@ class ChatRepository @Inject constructor(
         _messages.value = _messages.value + message
         if (oldestCursor == null) {
             oldestCursor = message.created_at
+        }
+    }
+
+    /** Replace feedback on a stored message (optimistic / rollback). No-op if message not in list. */
+    fun setFeedback(messageId: String, feedback: MessageFeedback?) {
+        val idx = _messages.value.indexOfFirst { it.id == messageId }
+        if (idx < 0) return
+        val updated = _messages.value.toMutableList().also {
+            it[idx] = it[idx].copy(feedback = feedback)
+        }
+        _messages.value = updated
+    }
+
+    /**
+     * Optimistically apply the vote/comment, PUT to the server, roll back on failure.
+     * Fire-and-forget from the UI's perspective — repository owns the state mutation.
+     */
+    suspend fun submitFeedback(
+        messageId: String,
+        vote: FeedbackVote,
+        comment: String?
+    ): ApiResult<FeedbackResponse> {
+        val prior = _messages.value.firstOrNull { it.id == messageId }?.feedback
+        setFeedback(messageId, MessageFeedback(vote, comment))
+        persistMessagesCache()
+
+        val result = safeCall {
+            chatApi.sendFeedback(messageId, FeedbackRequest(vote = vote.name, comment = comment))
+        }
+        if (result is ApiResult.Error) {
+            setFeedback(messageId, prior)
+            persistMessagesCache()
+        }
+        return result
+    }
+
+    private suspend fun persistMessagesCache() {
+        val snapshot = ChatHistoryResponse(
+            messages = _messages.value,
+            has_more = _hasMoreHistory.value
+        )
+        runCatching {
+            dataStore.edit { it[KEY_CACHED_HISTORY] = json.encodeToString(snapshot) }
         }
     }
 
