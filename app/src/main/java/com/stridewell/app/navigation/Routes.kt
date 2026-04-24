@@ -32,6 +32,14 @@ sealed class Route(val path: String) {
             if (encodedRun.isNullOrBlank()) "activity_detail" else "activity_detail?run=$encodedRun"
     }
 
+    // V2 Phase 2 screens
+    object RunAnalysis : Route("run_analysis/{runId}") {
+        const val argRunId = "runId"
+        fun destination(runId: String): String = "run_analysis/$runId"
+    }
+    object FitnessProfile : Route("fitness_profile")
+    object WeeklySummary  : Route("weekly_summary")
+
     companion object {
         fun forOnboardingStatus(status: OnboardingStatus?): String = when (status) {
             OnboardingStatus.complete,

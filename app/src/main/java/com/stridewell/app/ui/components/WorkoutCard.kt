@@ -103,6 +103,13 @@ private fun metricLine(workout: Workout, unitSystem: UnitSystem): String? {
     val parts = buildList {
         workout.target_distance_m?.let { add(FormatUtils.formatDistance(it, unitSystem)) }
         when {
+            workout.target_pace_range != null -> add(
+                FormatUtils.formatPaceRange(
+                    workout.target_pace_range.min_s_per_km,
+                    workout.target_pace_range.max_s_per_km,
+                    unitSystem
+                )
+            )
             workout.target_pace_s_per_km != null -> add(FormatUtils.formatPace(workout.target_pace_s_per_km, unitSystem))
             workout.target_duration_s != null -> add(FormatUtils.formatDuration(workout.target_duration_s))
         }

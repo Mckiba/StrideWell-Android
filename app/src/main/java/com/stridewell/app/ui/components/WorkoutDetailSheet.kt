@@ -71,15 +71,32 @@ fun WorkoutDetailSheet(
             DetailCard { Text(it, color = MaterialTheme.colorScheme.onSurface) }
         }
 
-        if (day.workout.target_distance_m != null || day.workout.target_pace_s_per_km != null || day.workout.target_duration_s != null) {
+        if (day.workout.target_distance_m != null ||
+            day.workout.target_pace_s_per_km != null ||
+            day.workout.target_pace_range != null ||
+            day.workout.target_duration_s != null
+        ) {
             DetailCard {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     Text("Targets", style = detailSectionStyle(), color = MaterialTheme.colorScheme.onSurface)
                     day.workout.target_distance_m?.let { DetailRow("Distance", FormatUtils.distance(it, unitSystem)) }
-                    day.workout.target_pace_s_per_km?.let { DetailRow("Pace", FormatUtils.pace(it, unitSystem)) }
+                    day.workout.target_pace_range?.let {
+                        DetailRow(
+                            "Pace range",
+                            FormatUtils.formatPaceRange(it.min_s_per_km, it.max_s_per_km, unitSystem)
+                        )
+                    }
+                    // Only show the single target pace if we don't already have a range
+                    if (day.workout.target_pace_range == null) {
+                        day.workout.target_pace_s_per_km?.let { DetailRow("Pace", FormatUtils.pace(it, unitSystem)) }
+                    }
                     day.workout.target_duration_s?.let { DetailRow("Duration", FormatUtils.duration(it)) }
                 }
             }
+        }
+
+        day.workout.effort_level?.let {
+            DetailCard { DetailRow("Effort", it.replace("_", " ").replaceFirstChar { c -> c.uppercase() }) }
         }
 
         day.workout.intensity?.let {

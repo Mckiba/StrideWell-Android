@@ -43,6 +43,7 @@ import com.stridewell.app.util.UnitSystem
 
 @Composable
 fun SettingsScreen(
+    onOpenFitnessProfile: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -66,7 +67,7 @@ fun SettingsScreen(
                 viewModel      = viewModel
             )
         }
-        item { TrainingPreferencesSection(uiState, viewModel) }
+        item { TrainingPreferencesSection(uiState, viewModel, onOpenFitnessProfile) }
         item { AccountSection(uiState, viewModel) }
     }
 }
@@ -236,7 +237,8 @@ private fun StravaRow(
 @Composable
 private fun TrainingPreferencesSection(
     uiState: SettingsViewModel.UiState,
-    viewModel: SettingsViewModel
+    viewModel: SettingsViewModel,
+    onOpenFitnessProfile: () -> Unit = {}
 ) {
     SettingsCard(title = "Training Preferences") {
         // Goal — read-only with description
@@ -245,6 +247,29 @@ private fun TrainingPreferencesSection(
             description = "Set via chat with your coach",
             trailing    = { ChevronRight() }
         )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        // V2 Phase 2 — Fitness Profile
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onOpenFitnessProfile)
+                .padding(horizontal = Spacing.md, vertical = Spacing.sm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f).padding(end = Spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+            ) {
+                Text("Fitness Profile", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text  = "Threshold pace, pace & HR zones",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            ChevronRight()
+        }
         HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
 
         // Units

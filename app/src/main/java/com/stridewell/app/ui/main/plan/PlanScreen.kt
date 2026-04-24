@@ -39,6 +39,7 @@ import com.stridewell.app.util.DateUtils
 @OptIn(ExperimentalMaterial3Api::class)
 fun PlanScreen(
     onOpenPlanChange: () -> Unit,
+    onOpenWeeklySummary: () -> Unit = {},
     hasLocationPermission: Boolean,
     heatmapViewModel: HeatmapViewModel,
     modifier: Modifier = Modifier,
@@ -150,6 +151,25 @@ fun PlanScreen(
                                     unitSystem = uiState.unitSystem,
                                     onClick = { viewModel.selectDay(day) }
                                 )
+                            }
+                        }
+
+                        // V2 Phase 2 — Weekly Summary link
+                        item {
+                            androidx.compose.material3.Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(onClick = onOpenWeeklySummary),
+                                tonalElevation = 2.dp,
+                                shadowElevation = 2.dp
+                            ) {
+                                Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                                    Text("Weekly Summary", style = sectionTitleStyle(), color = MaterialTheme.colorScheme.onSurface)
+                                    Text(
+                                        "Volume, compliance, long run, and quality sessions.",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
 

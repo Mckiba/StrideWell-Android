@@ -43,6 +43,31 @@ object FormatUtils {
         formatPace(secondsPerKm, unit)
 
     /**
+     * Formats a min/max pace range.
+     * Note: faster pace = smaller s/km. The range is displayed
+     * `min–max` (keeping numerical ordering), which matches iOS.
+     */
+    fun formatPaceRange(
+        minSecondsPerKm: Double,
+        maxSecondsPerKm: Double,
+        unit: UnitSystem = UnitSystem.METRIC
+    ): String {
+        val minStr = formatPace(minSecondsPerKm, unit)
+        // Strip the unit suffix off the first value so we render "5:20–5:40 /km"
+        val compactMin = minStr.substringBefore(" ")
+        return "$compactMin–${formatPace(maxSecondsPerKm, unit)}"
+    }
+
+    fun paceRange(
+        minSecondsPerKm: Double,
+        maxSecondsPerKm: Double,
+        unit: UnitSystem = UnitSystem.METRIC
+    ): String = formatPaceRange(minSecondsPerKm, maxSecondsPerKm, unit)
+
+    /** Percent formatter: 0.0–1.0 → "NN%". */
+    fun formatPercent(fraction: Double): String = "${(fraction * 100).toInt()}%"
+
+    /**
      * Converts total seconds to a duration string (unit-system independent).
      * Under 1 hour: "mm:ss" — e.g. 2700 → "45:00"
      * 1 hour or more: "h:mm" — e.g. 5400 → "1:30"

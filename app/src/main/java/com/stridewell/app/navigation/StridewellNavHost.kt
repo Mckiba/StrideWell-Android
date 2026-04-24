@@ -37,7 +37,10 @@ import com.stridewell.app.ui.main.chat.ChatViewModel
 import com.stridewell.app.ui.main.notifications.NotificationsViewModel
 import kotlinx.coroutines.tasks.await
 import com.stridewell.app.ui.main.activities.ActivityDetailScreen
+import com.stridewell.app.ui.main.analysis.RunAnalysisScreen
+import com.stridewell.app.ui.main.fitness.FitnessProfileScreen
 import com.stridewell.app.ui.main.planchange.PlanChangeScreen
+import com.stridewell.app.ui.main.weekly.WeeklySummaryScreen
 import com.stridewell.app.ui.onboarding.IntakeInterviewScreen
 import com.stridewell.app.ui.onboarding.PlanBuildingScreen
 import com.stridewell.app.ui.onboarding.PlanRevealScreen
@@ -220,6 +223,8 @@ fun StridewellNavHost(
                     val encodedRun = Uri.encode(Json.encodeToString(Run.serializer(), run))
                     navController.navigate(Route.activityDetail(encodedRun))
                 },
+                onOpenFitnessProfile = { navController.navigate(Route.FitnessProfile.path) },
+                onOpenWeeklySummary  = { navController.navigate(Route.WeeklySummary.path) },
                 chatEntryMessageFlow = chatEntryMessageFlow,
                 chatViewModel = chatVm
             )
@@ -261,8 +266,32 @@ fun StridewellNavHost(
             ActivityDetailScreen(
                 run = run,
                 unitSystem = unitSystem.unitSystem,
+                onBack = { navController.popBackStack() },
+                onViewAnalysis = { runId -> navController.navigate(Route.RunAnalysis.destination(runId)) }
+            )
+        }
+
+        // ── V2 Phase 2 screens ────────────────────────────────────────────────
+
+        composable(
+            route = Route.RunAnalysis.path,
+            arguments = listOf(
+                navArgument(Route.RunAnalysis.argRunId) { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val runId = backStackEntry.arguments?.getString(Route.RunAnalysis.argRunId).orEmpty()
+            RunAnalysisScreen(
+                runId = runId,
                 onBack = { navController.popBackStack() }
             )
+        }
+
+        composable(Route.FitnessProfile.path) {
+            FitnessProfileScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Route.WeeklySummary.path) {
+            WeeklySummaryScreen(onBack = { navController.popBackStack() })
         }
     }
 }

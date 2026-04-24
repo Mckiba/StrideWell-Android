@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.stridewell.app.api.AnalysisApi
 import com.stridewell.app.api.AuthApi
 import com.stridewell.app.api.ChatApi
 import com.stridewell.app.api.NotificationsApi
@@ -109,6 +110,11 @@ object AppModule {
     @Singleton
     fun provideNotificationsApi(retrofit: Retrofit): NotificationsApi =
         retrofit.create(NotificationsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideAnalysisApi(retrofit: Retrofit): AnalysisApi =
+        retrofit.create(AnalysisApi::class.java)
 
     // ── DataStore ─────────────────────────────────────────────────────────────
 

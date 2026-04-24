@@ -63,6 +63,8 @@ enum class MainTab(
 fun MainContainerScreen(
     onOpenPlanChange: (DecisionRecord?) -> Unit,
     onNavigateToActivityDetail: (Run) -> Unit,
+    onOpenFitnessProfile: () -> Unit,
+    onOpenWeeklySummary: () -> Unit,
     chatEntryMessageFlow: MutableStateFlow<String?>,
     chatViewModel: ChatViewModel,
     modifier: Modifier = Modifier
@@ -146,6 +148,7 @@ fun MainContainerScreen(
                 )
                 MainTab.Plan -> PlanScreen(
                     onOpenPlanChange = { onOpenPlanChange(null) },
+                    onOpenWeeklySummary = onOpenWeeklySummary,
                     hasLocationPermission = hasLocationPermission,
                     heatmapViewModel = heatmapViewModel,
                     modifier = Modifier
@@ -162,6 +165,7 @@ fun MainContainerScreen(
                     modifier = Modifier
                 )
                 MainTab.Settings -> SettingsScreen(
+                    onOpenFitnessProfile = onOpenFitnessProfile,
                     modifier = Modifier
                 )
             }

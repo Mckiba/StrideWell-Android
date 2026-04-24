@@ -1,5 +1,6 @@
 package com.stridewell.app.ui.main.activities
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,6 +43,7 @@ fun ActivityDetailScreen(
     run: Run?,
     unitSystem: UnitSystem,
     onBack: () -> Unit,
+    onViewAnalysis: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val title = run?.title
@@ -127,6 +129,25 @@ fun ActivityDetailScreen(
                                     ?.let { FormatUtils.pace(it, unitSystem) }
                                     ?: "—"
                             )
+                        }
+                    }
+                }
+
+                // V2 Phase 2 — View analysis link
+                item {
+                    DetailCard {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onViewAnalysis(run.id) },
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "View analysis",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text("›", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
