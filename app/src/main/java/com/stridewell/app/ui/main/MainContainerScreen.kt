@@ -62,7 +62,7 @@ enum class MainTab(
 @Composable
 fun MainContainerScreen(
     onOpenPlanChange: (DecisionRecord?) -> Unit,
-    onNavigateToActivityDetail: (Run) -> Unit,
+    onNavigateToRunDetail: (String) -> Unit,
     onOpenFitnessProfile: () -> Unit,
     onOpenWeeklySummary: () -> Unit,
     chatEntryMessageFlow: MutableStateFlow<String?>,
@@ -141,6 +141,7 @@ fun MainContainerScreen(
                         chatViewModel.sendInitialMessage(message)
                         selectedTab = MainTab.Chat
                     },
+                    onNavigateToRunDetail = onNavigateToRunDetail,
                     hasLocationPermission = hasLocationPermission,
                     heatmapViewModel = heatmapViewModel,
                     weatherViewModel = weatherViewModel,
@@ -158,7 +159,7 @@ fun MainContainerScreen(
                     modifier = Modifier
                 )
                 MainTab.Activities -> ActivitiesScreen(
-                    onNavigateToDetail = onNavigateToActivityDetail,
+                    onNavigateToDetail = onNavigateToRunDetail,
                     hasLocationPermission = hasLocationPermission,
                     heatmapViewModel = heatmapViewModel,
                     weatherViewModel = weatherViewModel,

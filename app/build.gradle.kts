@@ -10,6 +10,15 @@ plugins {
 val googleMapsStaticApiKey =
     (project.findProperty("GOOGLE_MAPS_STATIC_API_KEY") as String?) ?: "AIzaSyCPkTIFGiek4UUaEKDV-mVDgEBGRnys45s"
 
+// Mapbox public access token (PK). Read from local.properties / ~/.gradle/gradle.properties
+// or the MAPBOX_PUBLIC_TOKEN env var. Empty string is a soft-fail: the SDK will fail to
+// authenticate at runtime, but the app will still build (matches iOS behaviour where
+// Secrets.xcconfig stub keeps Xcode building without a real token).
+val mapboxPublicToken =
+    (project.findProperty("MAPBOX_PUBLIC_TOKEN") as String?)
+        ?: System.getenv("MAPBOX_PUBLIC_TOKEN")
+        ?: ""
+
 android {
     namespace = "com.stridewell"
     compileSdk {
@@ -40,6 +49,7 @@ android {
             // Backend relay receives Apple's form_post then redirects to this deep link
             buildConfigField("String", "APPLE_REDIRECT_URI",   "\"stridewell://oauth/apple/callback\"")
             buildConfigField("String", "GOOGLE_MAPS_STATIC_API_KEY", "\"AIzaSyCPkTIFGiek4UUaEKDV-mVDgEBGRnys45s\"")
+            buildConfigField("String", "MAPBOX_PUBLIC_TOKEN",        "\"pk.eyJ1IjoibWNraWJhIiwiYSI6ImNtb2h2cXMyOTAwM3oycm9haDgwODEzcngifQ.dZUOWGebonQxa6xP2VDUmA\"")
         }
         release {
             isMinifyEnabled = false
@@ -54,6 +64,7 @@ android {
             buildConfigField("String", "APPLE_CLIENT_ID",      "\"com.stridewell.service\"")
             buildConfigField("String", "APPLE_REDIRECT_URI",   "\"stridewell://oauth/apple/callback\"")
             buildConfigField("String", "GOOGLE_MAPS_STATIC_API_KEY", "\"AIzaSyCPkTIFGiek4UUaEKDV-mVDgEBGRnys45s\"")
+            buildConfigField("String", "MAPBOX_PUBLIC_TOKEN",        "\"pk.eyJ1IjoibWNraWJhIiwiYSI6ImNtb2h2cXMyOTAwM3oycm9haDgwODEzcngifQ.dZUOWGebonQxa6xP2VDUmA\"")
         }
     }
 
@@ -120,6 +131,10 @@ dependencies {
 
     // Haze (frosted glass blur)
     implementation(libs.haze)
+
+    // Mapbox Maps SDK (interactive route map on Run Detail screen)
+    implementation(libs.mapbox.android)
+    implementation(libs.mapbox.compose)
 
     // Splash Screen
     implementation(libs.androidx.core.splashscreen)

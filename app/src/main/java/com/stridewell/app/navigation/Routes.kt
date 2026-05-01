@@ -26,17 +26,18 @@ sealed class Route(val path: String) {
         fun destination(encodedRecord: String? = null): String =
             if (encodedRecord.isNullOrBlank()) basePath else "$basePath?record=$encodedRecord"
     }
-    object ActivityDetail : Route("activity_detail?run={run}") {
-        const val argRun = "run"
-        fun destination(encodedRun: String? = null): String =
-            if (encodedRun.isNullOrBlank()) "activity_detail" else "activity_detail?run=$encodedRun"
+    /**
+     * Run Detail screen — interactive Mapbox map + three-detent sheet hosting
+     * full stats, splits, V2 analysis, and elevation/HR/cadence charts. Replaces
+     * the legacy `ActivityDetail` (basic info) and `RunAnalysis` (analysis only)
+     * screens.
+     */
+    object RunDetail : Route("run_detail/{runId}") {
+        const val argRunId = "runId"
+        fun destination(runId: String): String = "run_detail/$runId"
     }
 
     // V2 Phase 2 screens
-    object RunAnalysis : Route("run_analysis/{runId}") {
-        const val argRunId = "runId"
-        fun destination(runId: String): String = "run_analysis/$runId"
-    }
     object FitnessProfile : Route("fitness_profile")
     object WeeklySummary  : Route("weekly_summary")
 
@@ -51,6 +52,6 @@ sealed class Route(val path: String) {
         }
 
         fun planChange(encodedRecord: String? = null) = PlanChange.destination(encodedRecord)
-        fun activityDetail(encodedRun: String?) = ActivityDetail.destination(encodedRun)
+        fun runDetail(runId: String) = RunDetail.destination(runId)
     }
 }

@@ -19,7 +19,6 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import androidx.navigation.compose.rememberNavController
 import com.stridewell.app.model.DecisionRecord
-import com.stridewell.app.model.Run
 import com.stridewell.app.ui.auth.LaunchViewModel
 import com.stridewell.app.ui.auth.SignInScreen
 import com.stridewell.app.ui.auth.SignUpScreen
@@ -32,12 +31,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.stridewell.app.ui.main.MainContainerScreen
-import com.stridewell.app.ui.main.activities.ActivitiesViewModel
 import com.stridewell.app.ui.main.chat.ChatViewModel
+import com.stridewell.app.ui.main.detail.RunDetailScreen
 import com.stridewell.app.ui.main.notifications.NotificationsViewModel
 import kotlinx.coroutines.tasks.await
-import com.stridewell.app.ui.main.activities.ActivityDetailScreen
-import com.stridewell.app.ui.main.analysis.RunAnalysisScreen
 import com.stridewell.app.ui.main.fitness.FitnessProfileScreen
 import com.stridewell.app.ui.main.planchange.PlanChangeScreen
 import com.stridewell.app.ui.main.weekly.WeeklySummaryScreen
@@ -219,9 +216,8 @@ fun StridewellNavHost(
                     }
                     navController.navigate(Route.planChange(encodedRecord))
                 },
-                onNavigateToActivityDetail = { run ->
-                    val encodedRun = Uri.encode(Json.encodeToString(Run.serializer(), run))
-                    navController.navigate(Route.activityDetail(encodedRun))
+                onNavigateToRunDetail = { runId ->
+                    navController.navigate(Route.RunDetail.destination(runId))
                 },
                 onOpenFitnessProfile = { navController.navigate(Route.FitnessProfile.path) },
                 onOpenWeeklySummary  = { navController.navigate(Route.WeeklySummary.path) },
@@ -247,44 +243,22 @@ fun StridewellNavHost(
                 onDismiss = { navController.popBackStack() }
             )
         }
+        // Run Detail — replaces both the legacy ActivityDetail (basic stats)
+        // and RunAnalysis (V2 analysis) screens.
         composable(
-            route = Route.ActivityDetail.path,
+            route = Route.RunDetail.path,
             arguments = listOf(
-                navArgument(Route.ActivityDetail.argRun) {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
+                navArgument(Route.RunDetail.argRunId) { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val encoded = backStackEntry.arguments?.getString(Route.ActivityDetail.argRun)
-            val run: Run? = encoded
-                ?.let(Uri::decode)
-                ?.let { json -> runCatching { Json.decodeFromString(Run.serializer(), json) }.getOrNull() }
-            val vm: ActivitiesViewModel = hiltViewModel()
-            val unitSystem by vm.uiState.collectAsStateWithLifecycle()
-            ActivityDetailScreen(
-                run = run,
-                unitSystem = unitSystem.unitSystem,
-                onBack = { navController.popBackStack() },
-                onViewAnalysis = { runId -> navController.navigate(Route.RunAnalysis.destination(runId)) }
-            )
-        }
-
-        // ── V2 Phase 2 screens ────────────────────────────────────────────────
-
-        composable(
-            route = Route.RunAnalysis.path,
-            arguments = listOf(
-                navArgument(Route.RunAnalysis.argRunId) { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val runId = backStackEntry.arguments?.getString(Route.RunAnalysis.argRunId).orEmpty()
-            RunAnalysisScreen(
+            val runId = backStackEntry.arguments?.getString(Route.RunDetail.argRunId).orEmpty()
+            RunDetailScreen(
                 runId = runId,
                 onBack = { navController.popBackStack() }
             )
         }
+
+        // ── V2 Phase 2 screens ────────────────────────────────────────────────
 
         composable(Route.FitnessProfile.path) {
             FitnessProfileScreen(onBack = { navController.popBackStack() })

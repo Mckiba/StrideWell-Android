@@ -72,6 +72,7 @@ private data class BannerCardData(
 fun HomeScreen(
     onOpenPlanChange: (DecisionRecord?) -> Unit,
     onOpenChatWithMessage: (String) -> Unit,
+    onNavigateToRunDetail: (String) -> Unit,
     hasLocationPermission: Boolean,
     heatmapViewModel: HeatmapViewModel,
     weatherViewModel: WeatherViewModel,
@@ -118,7 +119,8 @@ fun HomeScreen(
                         onOpenChatWithMessage = onOpenChatWithMessage,
                         onDismissActivityBanner = viewModel::dismissActivityBanner,
                         onOpenReflection = { showReflection = true },
-                        onWorkoutClick = { selectedWorkout = it }
+                        onWorkoutClick = { selectedWorkout = it },
+                        onNavigateToRunDetail = onNavigateToRunDetail,
                     )
                 }
             }
@@ -181,14 +183,11 @@ fun HomeScreen(
 
 @Composable
 private fun HomeLoading(innerPadding: PaddingValues) {
-    Box(
+    com.stridewell.app.ui.components.skeleton.HomeScreenSkeleton(
         modifier = Modifier
             .fillMaxSize()
-            .padding(innerPadding),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
+            .padding(innerPadding)
+    )
 }
 
 @Composable
@@ -253,7 +252,8 @@ private fun HomeContent(
     onOpenChatWithMessage: (String) -> Unit,
     onDismissActivityBanner: () -> Unit,
     onOpenReflection: () -> Unit,
-    onWorkoutClick: (PlanDay) -> Unit
+    onWorkoutClick: (PlanDay) -> Unit,
+    onNavigateToRunDetail: (String) -> Unit,
 ) {
     val cards = remember(
         uiState.hasPlanChanged,
@@ -358,7 +358,8 @@ private fun HomeContent(
         item {
             RecentActivitiesSection(
                 runs = uiState.recentRuns,
-                unitSystem = uiState.unitSystem
+                unitSystem = uiState.unitSystem,
+                onRunClick = onNavigateToRunDetail,
             )
         }
     }
@@ -460,7 +461,8 @@ private fun HomeInfoBanner(
 @Composable
 private fun RecentActivitiesSection(
     runs: List<Run>,
-    unitSystem: com.stridewell.app.util.UnitSystem
+    unitSystem: com.stridewell.app.util.UnitSystem,
+    onRunClick: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
         Text(
@@ -481,7 +483,11 @@ private fun RecentActivitiesSection(
             )
         } else {
             runs.forEach { run ->
-                ActivityCard(run = run, unitSystem = unitSystem)
+                ActivityCard(
+                    run = run,
+                    unitSystem = unitSystem,
+                    onClick = { onRunClick(run.id) },
+                )
             }
         }
     }

@@ -56,10 +56,10 @@ fun PlanScreen(
         )
 
         when (uiState.screenState) {
-            PlanViewModel.ScreenState.Loading -> Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) { androidx.compose.material3.CircularProgressIndicator() }
+            PlanViewModel.ScreenState.Loading ->
+                com.stridewell.app.ui.components.skeleton.PlanScreenSkeleton(
+                    modifier = Modifier.fillMaxSize()
+                )
             is PlanViewModel.ScreenState.Error -> Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

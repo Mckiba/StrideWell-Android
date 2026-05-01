@@ -8,6 +8,7 @@ import com.stridewell.app.api.ApiResult
 import com.stridewell.app.api.RunsApi
 import com.stridewell.app.model.HeatmapResponse
 import com.stridewell.app.model.RecentRunsResponse
+import com.stridewell.app.model.RunDetailResponse
 import com.stridewell.app.util.DateUtils
 import java.io.IOException
 import java.util.Date
@@ -77,6 +78,14 @@ class RunsRepository @Inject constructor(
 
     suspend fun heatmap(): ApiResult<HeatmapResponse> =
         safeCall { runsApi.heatmap() }
+
+    /**
+     * Live fetch — no caching for v1. The detail screen is opened from a list
+     * the user just saw, so a cache miss is acceptable and avoids serving stale
+     * splits/streams when Strava re-syncs an activity.
+     */
+    suspend fun runDetail(id: String): ApiResult<RunDetailResponse> =
+        safeCall { runsApi.runDetail(id) }
 
     suspend fun reset() {
         dataStore.edit { prefs ->

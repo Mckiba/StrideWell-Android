@@ -1,6 +1,7 @@
 package com.stridewell.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,7 +37,8 @@ import com.stridewell.app.util.UnitSystem
 fun ActivityCard(
     run: Run,
     unitSystem: UnitSystem,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     val coordinates = remember(run.route?.summary_polyline) {
         run.route?.summary_polyline
@@ -60,6 +62,7 @@ fun ActivityCard(
                 color = cardColor,
                 shape = RoundedCornerShape(CornerRadius.md)
             )
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = Spacing.md, vertical = Spacing.xs),
         horizontalArrangement = Arrangement.spacedBy(Spacing.xl2),
         verticalAlignment = Alignment.CenterVertically

@@ -66,7 +66,7 @@ import java.util.TimeZone
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivitiesScreen(
-    onNavigateToDetail: (Run) -> Unit,
+    onNavigateToDetail: (String) -> Unit,
     hasLocationPermission: Boolean,
     heatmapViewModel: HeatmapViewModel,
     weatherViewModel: WeatherViewModel,
@@ -142,12 +142,9 @@ fun ActivitiesScreen(
                 // Content
                 when (val state = uiState.screenState) {
                     ActivitiesViewModel.ScreenState.Loading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                        com.stridewell.app.ui.components.skeleton.ActivitiesScreenSkeleton(
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                     ActivitiesViewModel.ScreenState.Empty -> {
                         val hasFilters = uiState.searchQuery.isNotBlank() || uiState.selectedDate != null
@@ -254,7 +251,7 @@ fun ActivitiesScreen(
 @Composable
 private fun ActivitiesContent(
     uiState: ActivitiesViewModel.UiState,
-    onCardClick: (Run) -> Unit,
+    onCardClick: (String) -> Unit,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit
 ) {
@@ -289,7 +286,7 @@ private fun ActivitiesContent(
                 ActivityCard(
                     run = run,
                     unitSystem = uiState.unitSystem,
-                    modifier = Modifier.clickable { onCardClick(run) }
+                    modifier = Modifier.clickable { onCardClick(run.id) }
                 )
             }
             if (uiState.isLoadingMore) {
