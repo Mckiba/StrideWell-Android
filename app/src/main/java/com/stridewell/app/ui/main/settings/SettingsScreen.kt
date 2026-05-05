@@ -1,5 +1,6 @@
 package com.stridewell.app.ui.main.settings
 
+import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +42,7 @@ import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.util.AppTheme
 import com.stridewell.app.util.UnitSystem
+import java.util.Locale
 
 @Composable
 fun SettingsScreen(
@@ -68,6 +71,7 @@ fun SettingsScreen(
             )
         }
         item { TrainingPreferencesSection(uiState, viewModel, onOpenFitnessProfile) }
+        item { CoachingNotificationsSection(uiState, viewModel) }
         item { AccountSection(uiState, viewModel) }
     }
 }
@@ -334,7 +338,142 @@ private fun TrainingPreferencesSection(
     }
 }
 
-// ── Section 3: Account ────────────────────────────────────────────────────────
+// ── Section 3: Coaching Notifications ────────────────────────────────────────
+
+@Composable
+private fun CoachingNotificationsSection(
+    uiState: SettingsViewModel.UiState,
+    viewModel: SettingsViewModel
+) {
+    val context = LocalContext.current
+    val controlsEnabled = uiState.proactiveEnabled
+    val quietHoursControlsEnabled = controlsEnabled && uiState.proactiveQuietHoursEnabled
+
+    fun showTimeDialog(initial: String, onPicked: (String) -> Unit) {
+        val parts = initial.split(":")
+        val hour = parts.getOrNull(0)?.toIntOrNull() ?: 0
+        val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        TimePickerDialog(
+            context,
+            { _, pickedHour, pickedMinute ->
+                onPicked(String.format(Locale.US, "%02d:%02d", pickedHour, pickedMinute))
+            },
+            hour,
+            minute,
+            true
+        ).show()
+    }
+
+    SettingsCard(title = "Coaching Notifications") {
+        SettingsToggleRow(
+            label = "Enable coaching notifications",
+            description = "Receive proactive coach check-ins based on your training",
+            checked = uiState.proactiveEnabled,
+            onToggle = viewModel::onProactiveEnabledChanged
+        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        SettingsToggleRow(
+            label = "Training milestones",
+            description = "Consistency, breakthrough workouts, fitness improvements",
+            checked = uiState.proactiveTrainingMilestone,
+            onToggle = viewModel::onProactiveTrainingMilestoneChanged,
+            enabled = controlsEnabled
+        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        SettingsToggleRow(
+            label = "Training concerns",
+            description = "Early flags for strain, drift, or risk patterns",
+            checked = uiState.proactiveTrainingConcern,
+            onToggle = viewModel::onProactiveTrainingConcernChanged,
+            enabled = controlsEnabled
+        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        SettingsToggleRow(
+            label = "Upcoming events",
+            description = "Timing alerts around race and plan events",
+            checked = uiState.proactiveUpcomingEvent,
+            onToggle = viewModel::onProactiveUpcomingEventChanged,
+            enabled = controlsEnabled
+        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        SettingsToggleRow(
+            label = "Re-engagement",
+            description = "Check-ins after extended inactivity",
+            checked = uiState.proactiveReengagement,
+            onToggle = viewModel::onProactiveReengagementChanged,
+            enabled = controlsEnabled
+        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        SettingsToggleRow(
+            label = "Plan follow-up",
+            description = "Missed-key-session and block-drift follow-ups",
+            checked = uiState.proactivePlanFollowup,
+            onToggle = viewModel::onProactivePlanFollowupChanged,
+            enabled = controlsEnabled
+        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        SettingsToggleRow(
+            label = "Quiet hours",
+            description = "Pause delivery during your local overnight window",
+            checked = uiState.proactiveQuietHoursEnabled,
+            onToggle = viewModel::onProactiveQuietHoursEnabledChanged,
+            enabled = controlsEnabled
+        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        SettingsTimeRow(
+            label = "Quiet hours start",
+            description = "Local time",
+            value = uiState.proactiveQuietHoursStart,
+            enabled = quietHoursControlsEnabled,
+            onClick = {
+                showTimeDialog(uiState.proactiveQuietHoursStart, viewModel::onProactiveQuietHoursStartChanged)
+            }
+        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        SettingsTimeRow(
+            label = "Quiet hours end",
+            description = "Local time",
+            value = uiState.proactiveQuietHoursEnd,
+            enabled = quietHoursControlsEnabled,
+            onClick = {
+                showTimeDialog(uiState.proactiveQuietHoursEnd, viewModel::onProactiveQuietHoursEndChanged)
+            }
+        )
+        HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+
+        SettingsDescriptionRow(
+            label = "Timezone",
+            description = "Used for quiet hours delivery",
+            trailing = {
+                Text(
+                    text = uiState.proactiveTimezone,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        )
+
+        if (!uiState.proactiveSyncError.isNullOrBlank()) {
+            HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.md))
+            Text(
+                text = uiState.proactiveSyncError,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)
+            )
+        }
+    }
+}
+
+// ── Section 4: Account ────────────────────────────────────────────────────────
 
 @Composable
 private fun AccountSection(
@@ -541,10 +680,14 @@ private fun SettingsToggleRow(
     label: String,
     description: String,
     checked: Boolean,
-    onToggle: (Boolean) -> Unit
+    onToggle: (Boolean) -> Unit,
+    enabled: Boolean = true
 ) {
     Row(
-        modifier          = Modifier.fillMaxWidth().padding(horizontal = Spacing.md, vertical = Spacing.sm),
+        modifier          = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else 0.5f)
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
@@ -560,7 +703,50 @@ private fun SettingsToggleRow(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Switch(checked = checked, onCheckedChange = onToggle)
+        Switch(
+            checked = checked,
+            onCheckedChange = if (enabled) onToggle else null,
+            enabled = enabled
+        )
+    }
+}
+
+@Composable
+private fun SettingsTimeRow(
+    label: String,
+    description: String,
+    value: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else 0.5f)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = Spacing.sm),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+        ) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

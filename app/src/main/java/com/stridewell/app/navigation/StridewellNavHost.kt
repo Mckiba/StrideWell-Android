@@ -50,7 +50,7 @@ import kotlinx.serialization.json.Json
 fun StridewellNavHost(
     launchState: LaunchViewModel.LaunchState,
     unauthorizedFlow: Flow<Unit>,
-    notificationDeepLinkFlow: Flow<String?>,
+    notificationDeepLinkFlow: MutableStateFlow<String?>,
     chatEntryMessageFlow: MutableStateFlow<String?>,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
@@ -84,9 +84,19 @@ fun StridewellNavHost(
     LaunchedEffect(Unit) {
         notificationDeepLinkFlow.collect { deepLink ->
             when (deepLink) {
-                "plan_change" -> navController.navigate(Route.PlanChange.basePath)
-                "plan_reveal" -> navController.navigate(Route.PlanReveal.path)
-                "home"        -> Unit // already at Main; no navigation needed
+                "plan_change" -> {
+                    navController.navigate(Route.PlanChange.basePath)
+                    notificationDeepLinkFlow.value = null
+                }
+                "plan_reveal" -> {
+                    navController.navigate(Route.PlanReveal.path)
+                    notificationDeepLinkFlow.value = null
+                }
+                "home", "chat" -> {
+                    navController.navigate(Route.Main.path) {
+                        launchSingleTop = true
+                    }
+                }
             }
         }
     }
@@ -221,6 +231,7 @@ fun StridewellNavHost(
                 },
                 onOpenFitnessProfile = { navController.navigate(Route.FitnessProfile.path) },
                 onOpenWeeklySummary  = { navController.navigate(Route.WeeklySummary.path) },
+                notificationDeepLinkFlow = notificationDeepLinkFlow,
                 chatEntryMessageFlow = chatEntryMessageFlow,
                 chatViewModel = chatVm
             )

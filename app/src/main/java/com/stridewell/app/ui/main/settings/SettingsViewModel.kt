@@ -74,6 +74,17 @@ class SettingsViewModel @Inject constructor(
         val appTheme:                AppTheme    = AppTheme.DEVICE,
         val reflectionReminders:     Boolean     = true,
         val planUpdateAlerts:        Boolean     = true,
+        val proactiveEnabled:        Boolean     = true,
+        val proactiveTrainingMilestone: Boolean  = true,
+        val proactiveTrainingConcern: Boolean    = true,
+        val proactiveUpcomingEvent:  Boolean     = true,
+        val proactiveReengagement:   Boolean     = true,
+        val proactivePlanFollowup:   Boolean     = true,
+        val proactiveQuietHoursEnabled: Boolean  = true,
+        val proactiveQuietHoursStart: String     = "22:00",
+        val proactiveQuietHoursEnd:   String     = "07:00",
+        val proactiveTimezone:       String      = "UTC",
+        val proactiveSyncError:      String?     = null,
         val goalName:                String?     = null,
         val deleteState:             DeleteState = DeleteState.Idle,
         val showDisconnectDialog:    Boolean     = false,
@@ -102,6 +113,46 @@ class SettingsViewModel @Inject constructor(
                         appTheme            = theme,
                         reflectionReminders = reminders,
                         planUpdateAlerts    = alerts
+                    )
+                }
+            }.collect {}
+        }
+
+        viewModelScope.launch {
+            combine(
+                settingsRepository.proactiveEnabled,
+                settingsRepository.proactiveTrainingMilestone,
+                settingsRepository.proactiveTrainingConcern,
+                settingsRepository.proactiveUpcomingEvent,
+                settingsRepository.proactiveReengagement
+            ) { proactiveEnabled, milestone, concern, upcoming, reengagement ->
+                _uiState.update {
+                    it.copy(
+                        proactiveEnabled = proactiveEnabled,
+                        proactiveTrainingMilestone = milestone,
+                        proactiveTrainingConcern = concern,
+                        proactiveUpcomingEvent = upcoming,
+                        proactiveReengagement = reengagement
+                    )
+                }
+            }.collect {}
+        }
+
+        viewModelScope.launch {
+            combine(
+                settingsRepository.proactivePlanFollowup,
+                settingsRepository.proactiveQuietHoursEnabled,
+                settingsRepository.proactiveQuietHoursStart,
+                settingsRepository.proactiveQuietHoursEnd,
+                settingsRepository.proactiveTimezone
+            ) { followup, quietEnabled, quietStart, quietEnd, timezone ->
+                _uiState.update {
+                    it.copy(
+                        proactivePlanFollowup = followup,
+                        proactiveQuietHoursEnabled = quietEnabled,
+                        proactiveQuietHoursStart = quietStart,
+                        proactiveQuietHoursEnd = quietEnd,
+                        proactiveTimezone = timezone
                     )
                 }
             }.collect {}
@@ -206,6 +257,73 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setPlanUpdateAlerts(enabled) }
     }
 
+    fun onProactiveEnabledChanged(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setProactiveEnabled(enabled)
+            syncProactivePreferences()
+        }
+    }
+
+    fun onProactiveTrainingMilestoneChanged(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setProactiveTrainingMilestone(enabled)
+            syncProactivePreferences()
+        }
+    }
+
+    fun onProactiveTrainingConcernChanged(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setProactiveTrainingConcern(enabled)
+            syncProactivePreferences()
+        }
+    }
+
+    fun onProactiveUpcomingEventChanged(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setProactiveUpcomingEvent(enabled)
+            syncProactivePreferences()
+        }
+    }
+
+    fun onProactiveReengagementChanged(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setProactiveReengagement(enabled)
+            syncProactivePreferences()
+        }
+    }
+
+    fun onProactivePlanFollowupChanged(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setProactivePlanFollowup(enabled)
+            syncProactivePreferences()
+        }
+    }
+
+    fun onProactiveQuietHoursEnabledChanged(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setProactiveQuietHoursEnabled(enabled)
+            syncProactivePreferences()
+        }
+    }
+
+    fun onProactiveQuietHoursStartChanged(startLocal: String) {
+        viewModelScope.launch {
+            settingsRepository.setProactiveQuietHoursStart(startLocal)
+            syncProactivePreferences()
+        }
+    }
+
+    fun onProactiveQuietHoursEndChanged(endLocal: String) {
+        viewModelScope.launch {
+            settingsRepository.setProactiveQuietHoursEnd(endLocal)
+            syncProactivePreferences()
+        }
+    }
+
+    fun clearProactiveSyncError() {
+        _uiState.update { it.copy(proactiveSyncError = null) }
+    }
+
     // ── Sign out ──────────────────────────────────────────────────────────────
 
     fun onSignOut() {
@@ -260,4 +378,12 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onDeleteErrorDismissed() { _uiState.update { it.copy(deleteState = DeleteState.Idle) } }
+
+    private suspend fun syncProactivePreferences() {
+        _uiState.update { it.copy(proactiveSyncError = null) }
+        when (val result = settingsRepository.putProactivePreferences()) {
+            is ApiResult.Success -> _uiState.update { it.copy(proactiveSyncError = null) }
+            is ApiResult.Error -> _uiState.update { it.copy(proactiveSyncError = result.message) }
+        }
+    }
 }

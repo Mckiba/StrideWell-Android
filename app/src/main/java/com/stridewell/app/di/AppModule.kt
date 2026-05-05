@@ -12,6 +12,7 @@ import com.stridewell.app.api.OnboardingApi
 import com.stridewell.app.api.PlanApi
 import com.stridewell.app.api.ReflectionApi
 import com.stridewell.app.api.RunsApi
+import com.stridewell.app.api.SettingsApi
 import com.stridewell.app.api.StravaApi
 import com.stridewell.app.api.buildOkHttpClient
 import com.stridewell.app.api.buildRetrofit
@@ -115,6 +116,11 @@ object AppModule {
     @Singleton
     fun provideAnalysisApi(retrofit: Retrofit): AnalysisApi =
         retrofit.create(AnalysisApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideSettingsApi(retrofit: Retrofit): SettingsApi =
+        retrofit.create(SettingsApi::class.java)
 
     // ── DataStore ─────────────────────────────────────────────────────────────
 

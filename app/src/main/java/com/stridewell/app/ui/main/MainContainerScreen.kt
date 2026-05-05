@@ -65,6 +65,7 @@ fun MainContainerScreen(
     onNavigateToRunDetail: (String) -> Unit,
     onOpenFitnessProfile: () -> Unit,
     onOpenWeeklySummary: () -> Unit,
+    notificationDeepLinkFlow: MutableStateFlow<String?>,
     chatEntryMessageFlow: MutableStateFlow<String?>,
     chatViewModel: ChatViewModel,
     modifier: Modifier = Modifier
@@ -89,6 +90,21 @@ fun MainContainerScreen(
     ) { grants ->
         hasLocationPermission = grants[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             grants[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+    }
+
+    LaunchedEffect(Unit) {
+        notificationDeepLinkFlow.collect { deepLink ->
+            when (deepLink) {
+                "chat" -> {
+                    selectedTab = MainTab.Chat
+                    notificationDeepLinkFlow.value = null
+                }
+                "home" -> {
+                    selectedTab = MainTab.Home
+                    notificationDeepLinkFlow.value = null
+                }
+            }
+        }
     }
 
     LaunchedEffect(Unit) {
