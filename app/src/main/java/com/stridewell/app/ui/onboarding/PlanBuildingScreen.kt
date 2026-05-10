@@ -23,6 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,14 +59,16 @@ fun PlanBuildingScreen(
 
     PlanBuildingContent(
         errorMessage = uiState.errorMessage,
-        onRetry = viewModel::retry
+        onRetry = viewModel::retry,
+        onSignOut = viewModel::onSignOut
     )
 }
 
 @Composable
 private fun PlanBuildingContent(
     errorMessage: String?,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onSignOut: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -76,6 +79,19 @@ private fun PlanBuildingContent(
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        androidx.compose.foundation.layout.Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = onSignOut) {
+                Text(
+                    text = "Sign out",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         AnimatedPlanPulse(isActive = errorMessage == null)
