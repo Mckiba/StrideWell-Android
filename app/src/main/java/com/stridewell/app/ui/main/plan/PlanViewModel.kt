@@ -3,6 +3,7 @@ package com.stridewell.app.ui.main.plan
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
+import com.stridewell.app.data.ConnectivityRepository
 import com.stridewell.app.data.PlanRepository
 import com.stridewell.app.data.RunsRepository
 import com.stridewell.app.data.SettingsRepository
@@ -26,7 +27,8 @@ import kotlinx.coroutines.launch
 class PlanViewModel @Inject constructor(
     private val planRepository: PlanRepository,
     private val runsRepository: RunsRepository,
-    settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository,
+    connectivityRepository: ConnectivityRepository
 ) : ViewModel() {
 
     sealed interface ScreenState {
@@ -57,7 +59,7 @@ class PlanViewModel @Inject constructor(
                 settingsRepository.unitSystem,
                 planRepository.planUpdated,
                 planRepository.currentWeek,
-                planRepository.isOffline
+                connectivityRepository.isOffline
             ) { unitSystem, hasPlanChanged, refreshedCurrentWeek, isOffline ->
                 _uiState.update {
                     val selectedWeekStart = DateUtils.format(it.selectedMonday)

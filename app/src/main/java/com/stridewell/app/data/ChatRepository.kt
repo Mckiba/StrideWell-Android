@@ -40,9 +40,6 @@ class ChatRepository @Inject constructor(
         private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
     }
 
-    private val _isOffline = MutableStateFlow(false)
-    val isOffline: StateFlow<Boolean> = _isOffline.asStateFlow()
-
     private val _conversationId = MutableStateFlow<String?>(null)
     val conversationId: StateFlow<String?> = _conversationId.asStateFlow()
 
@@ -76,7 +73,6 @@ class ChatRepository @Inject constructor(
         _messages.value = emptyList()
         _hasMoreHistory.value = false
         _isLoadingHistory.value = false
-        _isOffline.value = false
         oldestCursor = null
 
         if (clearPersistedConversationId) {
@@ -94,7 +90,6 @@ class ChatRepository @Inject constructor(
         return try {
             when (val result = safeCall { chatApi.history(limit = limit, before = null) }) {
                 is ApiResult.Success -> {
-                    _isOffline.value = false
                     applyInitialHistory(result.data)
                     dataStore.edit { it[KEY_CACHED_HISTORY] = json.encodeToString(result.data) }
                     ApiResult.Success(Unit)
@@ -106,15 +101,12 @@ class ChatRepository @Inject constructor(
                             runCatching { json.decodeFromString<ChatHistoryResponse>(it) }.getOrNull()
                         }
                         if (cached != null) {
-                            _isOffline.value = true
                             applyInitialHistory(cached)
                             ApiResult.Success(Unit)
                         } else {
-                            _isOffline.value = false
                             result
                         }
                     } else {
-                        _isOffline.value = false
                         result
                     }
                 }

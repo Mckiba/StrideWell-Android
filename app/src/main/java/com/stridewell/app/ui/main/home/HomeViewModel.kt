@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.data.ActivityRepository
+import com.stridewell.app.data.ConnectivityRepository
 import com.stridewell.app.data.PlanRepository
 import com.stridewell.app.data.RunsRepository
 import com.stridewell.app.data.SettingsRepository
@@ -29,7 +30,8 @@ class HomeViewModel @Inject constructor(
     private val planRepository: PlanRepository,
     private val runsRepository: RunsRepository,
     private val settingsRepository: SettingsRepository,
-    private val activityRepository: ActivityRepository
+    private val activityRepository: ActivityRepository,
+    private val connectivityRepository: ConnectivityRepository
 ) : ViewModel() {
 
     private data class BaseInputs(
@@ -117,7 +119,7 @@ class HomeViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            planRepository.isOffline.collect { offline ->
+            connectivityRepository.isOffline.collect { offline ->
                 _uiState.update { it.copy(isOffline = offline) }
             }
         }
