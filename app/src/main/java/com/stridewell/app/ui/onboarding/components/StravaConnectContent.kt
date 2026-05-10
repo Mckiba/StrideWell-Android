@@ -59,6 +59,7 @@ fun StravaConnectContent(
     onSkip: () -> Unit          = {},
     onContinue: () -> Unit      = {},
     onRetrySession: () -> Unit  = {},
+    onSignOut: () -> Unit       = {},
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -190,6 +191,17 @@ fun StravaConnectContent(
                         text  = "Skip for now",
                         color = Color.White.copy(alpha = 0.6f),
                         style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                TextButton(
+                    onClick  = onSignOut,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text  = "Sign out",
+                        color = Color.White.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }

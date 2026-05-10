@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.data.OnboardingRepository
+import com.stridewell.app.data.TokenStore
 import com.stridewell.app.model.OnboardingStatus
 import com.stridewell.app.util.Polling
 import com.stridewell.app.util.StravaOAuthHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,8 @@ import javax.inject.Named
 @HiltViewModel
 class StravaConnectViewModel @Inject constructor(
     private val repository: OnboardingRepository,
+    private val tokenStore: TokenStore,
+    private val unauthorizedFlow: MutableSharedFlow<Unit>,
     @Named("oauthCode") private val oauthCodeFlow: MutableStateFlow<String?>
 ) : ViewModel() {
 
@@ -129,7 +133,15 @@ class StravaConnectViewModel @Inject constructor(
     }
 
     private suspend fun pollUntilInterview() {
+        var attempts = 0
         Polling.exponentialBackoff {
+            attempts += 1
+            if (attempts > 10) {
+                _screenState.value = ScreenState.SessionError(
+                    "Analysis is taking longer than expected. Tap 'Try again' to retry."
+                )
+                return@exponentialBackoff true
+            }
             val result = repository.status()
             if (result is ApiResult.Success && result.data.status == OnboardingStatus.interview) {
                 _navigateToInterview.value = true
@@ -157,5 +169,12 @@ class StravaConnectViewModel @Inject constructor(
     /** Called by the screen after navigation so the event isn't re-triggered. */
     fun onNavigatedToInterview() {
         _navigateToInterview.value = false
+    }
+
+    fun onSignOut() {
+        viewModelScope.launch {
+            tokenStore.clearToken()
+            unauthorizedFlow.tryEmit(Unit)
+        }
     }
 }

@@ -27,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stridewell.app.ui.background.heatmap.HeatmapBackgroundView
 import com.stridewell.app.ui.background.heatmap.HeatmapViewModel
+import com.stridewell.app.ui.main.rememberNavBarBottomInset
 import com.stridewell.app.ui.components.WeekNavigator
 import com.stridewell.app.ui.components.WeekOverviewCard
 import com.stridewell.app.ui.components.WorkoutCard
@@ -83,7 +84,12 @@ fun PlanScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(Spacing.md),
-                        contentPadding = PaddingValues(Spacing.md)
+                        contentPadding = PaddingValues(
+                            start = Spacing.md,
+                            end = Spacing.md,
+                            top = Spacing.md,
+                            bottom = Spacing.md + rememberNavBarBottomInset()
+                        )
                     ) {
                         if (uiState.isOffline) {
                             item {

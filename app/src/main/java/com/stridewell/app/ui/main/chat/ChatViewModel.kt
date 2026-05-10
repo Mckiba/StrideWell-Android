@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.data.ChatRepository
+import com.stridewell.app.data.ConnectivityRepository
 import com.stridewell.app.data.PlanRepository
 import com.stridewell.app.model.AgentUsed
 import com.stridewell.app.model.ChatMessage
@@ -27,7 +28,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
-    private val planRepository: PlanRepository
+    private val planRepository: PlanRepository,
+    private val connectivityRepository: ConnectivityRepository
 ) : ViewModel() {
 
     data class UiState(
@@ -70,7 +72,7 @@ class ChatViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            chatRepository.isOffline.collect { offline ->
+            connectivityRepository.isOffline.collect { offline ->
                 _uiState.update { it.copy(isOffline = offline) }
             }
         }

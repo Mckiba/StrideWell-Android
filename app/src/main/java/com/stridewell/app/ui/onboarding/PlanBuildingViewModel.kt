@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.data.OnboardingRepository
+import com.stridewell.app.data.TokenStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -19,7 +20,9 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class PlanBuildingViewModel @Inject constructor(
-    private val repository: OnboardingRepository
+    private val repository: OnboardingRepository,
+    private val tokenStore: TokenStore,
+    private val unauthorizedFlow: MutableSharedFlow<Unit>
 ) : ViewModel() {
 
     data class UiState(
@@ -89,6 +92,13 @@ class PlanBuildingViewModel @Inject constructor(
                 elapsedMs += delayMs
                 delayMs = minOf(delayMs + 3_000L, 15_000L)
             }
+        }
+    }
+
+    fun onSignOut() {
+        viewModelScope.launch {
+            tokenStore.clearToken()
+            unauthorizedFlow.tryEmit(Unit)
         }
     }
 }

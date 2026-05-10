@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stridewell.R
+import com.stridewell.app.ui.main.rememberNavBarBottomInset
 import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.model.PlanDay
 import com.stridewell.app.model.PlanWeekResponse
@@ -312,7 +313,12 @@ private fun HomeContent(
             .padding(innerPadding),
         state = rememberLazyListState(),
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
-        contentPadding = PaddingValues(Spacing.md)
+        contentPadding = PaddingValues(
+            start = Spacing.md,
+            end = Spacing.md,
+            top = Spacing.md,
+            bottom = Spacing.md + rememberNavBarBottomInset()
+        )
     ) {
         if (uiState.isOffline) {
             item {

@@ -55,6 +55,7 @@ import com.stridewell.app.ui.background.heatmap.HeatmapBackgroundView
 import com.stridewell.app.ui.background.heatmap.HeatmapViewModel
 import com.stridewell.app.ui.background.weather.StormOverlayView
 import com.stridewell.app.ui.background.weather.WeatherViewModel
+import com.stridewell.app.ui.main.rememberNavBarBottomInset
 import com.stridewell.app.ui.components.ActivityCard
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.util.DateUtils
@@ -279,7 +280,12 @@ private fun ActivitiesContent(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(Spacing.md),
+            contentPadding = PaddingValues(
+                start = Spacing.md,
+                end = Spacing.md,
+                top = Spacing.md,
+                bottom = Spacing.md + rememberNavBarBottomInset()
+            ),
             verticalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             items(uiState.runs, key = { it.id }) { run ->

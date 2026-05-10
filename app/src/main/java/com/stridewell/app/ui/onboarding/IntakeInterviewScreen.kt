@@ -87,7 +87,7 @@ fun IntakeInterviewScreen(
             .background(MaterialTheme.colorScheme.background)
             .imePadding()
     ) {
-        IntakeInterviewTopBar()
+        IntakeInterviewTopBar(onSignOut = viewModel::onSignOut)
 
         LazyColumn(
             modifier = Modifier
@@ -138,7 +138,7 @@ fun IntakeInterviewScreen(
 }
 
 @Composable
-private fun IntakeInterviewTopBar() {
+private fun IntakeInterviewTopBar(onSignOut: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -152,6 +152,16 @@ private fun IntakeInterviewTopBar() {
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.align(Alignment.Center)
         )
+        TextButton(
+            onClick = onSignOut,
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+            Text(
+                text = "Sign out",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

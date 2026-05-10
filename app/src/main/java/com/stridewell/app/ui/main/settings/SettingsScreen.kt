@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.stridewell.app.ui.main.rememberNavBarBottomInset
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.util.AppTheme
@@ -61,7 +62,12 @@ fun SettingsScreen(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-        contentPadding = PaddingValues(Spacing.md)
+        contentPadding = PaddingValues(
+            start = Spacing.md,
+            end = Spacing.md,
+            top = Spacing.md,
+            bottom = Spacing.md + rememberNavBarBottomInset()
+        )
     ) {
         item {
             ConnectedAccountsSection(

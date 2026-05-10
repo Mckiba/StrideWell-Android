@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.data.OnboardingRepository
+import com.stridewell.app.data.TokenStore
 import com.stridewell.app.model.InterviewMessage
 import com.stridewell.app.model.InterviewMessageRole
 import com.stridewell.app.model.OnboardingMessageRequest
@@ -24,7 +25,9 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class IntakeInterviewViewModel @Inject constructor(
-    private val repository: OnboardingRepository
+    private val repository: OnboardingRepository,
+    private val tokenStore: TokenStore,
+    private val unauthorizedFlow: MutableSharedFlow<Unit>
 ) : ViewModel() {
 
     enum class Phase {
@@ -276,6 +279,13 @@ class IntakeInterviewViewModel @Inject constructor(
                 phase = Phase.Error,
                 errorMessage = message
             )
+        }
+    }
+
+    fun onSignOut() {
+        viewModelScope.launch {
+            tokenStore.clearToken()
+            unauthorizedFlow.tryEmit(Unit)
         }
     }
 }

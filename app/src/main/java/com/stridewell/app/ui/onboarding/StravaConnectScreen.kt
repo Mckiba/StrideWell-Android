@@ -40,6 +40,7 @@ fun StravaConnectScreen(
         onConnect      = { viewModel.onConnectClicked(context) },
         onSkip         = viewModel::onSkip,
         onContinue     = viewModel::onContinue,
-        onRetrySession = viewModel::onRetrySession
+        onRetrySession = viewModel::onRetrySession,
+        onSignOut      = viewModel::onSignOut
     )
 }

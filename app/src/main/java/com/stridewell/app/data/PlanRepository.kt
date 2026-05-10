@@ -53,9 +53,6 @@ class PlanRepository @Inject constructor(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val _isOffline = MutableStateFlow(false)
-    val isOffline: StateFlow<Boolean> = _isOffline.asStateFlow()
-
     private val _currentPlanVersionId = MutableStateFlow<String?>(null)
     val currentPlanVersionId: StateFlow<String?> = _currentPlanVersionId.asStateFlow()
 
@@ -95,23 +92,13 @@ class PlanRepository @Inject constructor(
         val result = safeCall { planApi.today() }
         return when {
             result is ApiResult.Success -> {
-                _isOffline.value = false
                 saveTodayToCache(result.data)
                 result
             }
             result is ApiResult.Error && result.status == 0 -> {
-                loadTodayFromCache()?.let { cached ->
-                    _isOffline.value = true
-                    ApiResult.Success(cached)
-                } ?: run {
-                    _isOffline.value = false
-                    result
-                }
+                loadTodayFromCache()?.let { ApiResult.Success(it) } ?: result
             }
-            else -> {
-                _isOffline.value = false
-                result
-            }
+            else -> result
         }
     }
 
@@ -119,23 +106,13 @@ class PlanRepository @Inject constructor(
         val result = safeCall { planApi.week(start) }
         return when {
             result is ApiResult.Success -> {
-                _isOffline.value = false
                 saveWeekToCache(result.data)
                 result
             }
             result is ApiResult.Error && result.status == 0 -> {
-                loadWeekFromCache(start)?.let { cached ->
-                    _isOffline.value = true
-                    ApiResult.Success(cached)
-                } ?: run {
-                    _isOffline.value = false
-                    result
-                }
+                loadWeekFromCache(start)?.let { ApiResult.Success(it) } ?: result
             }
-            else -> {
-                _isOffline.value = false
-                result
-            }
+            else -> result
         }
     }
 
@@ -212,7 +189,6 @@ class PlanRepository @Inject constructor(
         _currentWeek.value = null
         _goalSummary.value = null
         _weekCache.value = emptyMap()
-        _isOffline.value = false
 
         if (clearSeenVersion) {
             _lastSeenPlanVersionId.value = null
