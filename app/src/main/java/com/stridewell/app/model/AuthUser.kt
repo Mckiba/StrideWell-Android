@@ -24,7 +24,15 @@ data class LoginRequest(
 @Serializable
 data class LoginResponse(
     val token: String,
-    val user_id: String
+    val user_id: String,
+    // Session lifecycle fields. Older payloads omit them, so all default to null.
+    val refresh_token: String? = null,
+    val expires_at: Long? = null
+)
+
+@Serializable
+data class RefreshRequest(
+    val refresh_token: String
 )
 
 @Serializable

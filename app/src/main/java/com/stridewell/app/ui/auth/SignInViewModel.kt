@@ -53,7 +53,11 @@ class SignInViewModel @Inject constructor(
                     planRepository.clearInMemoryState(clearSeenVersion = true)
                     chatRepository.clearInMemoryState(clearPersistedConversationId = true)
                     activityRepository.reset()
-                    tokenStore.saveToken(loginResult.data.token)
+                    tokenStore.saveSession(
+                        loginResult.data.token,
+                        loginResult.data.refresh_token,
+                        loginResult.data.expires_at,
+                    )
                     tokenStore.saveUserId(loginResult.data.user_id)
                 }
             }
