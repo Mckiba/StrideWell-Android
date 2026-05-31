@@ -103,6 +103,9 @@ fun buildOkHttpClient(
         .addInterceptor(TimezoneInterceptor())
         .addInterceptor(UnauthorizedInterceptor(unauthorizedFlow))
         .addInterceptor(logging)
+        // Refreshes the access token on 401 and retries the request transparently.
+        // Only when a refresh attempt fails does the 401 reach UnauthorizedInterceptor.
+        .authenticator(TokenAuthenticator(tokenStore, unauthorizedFlow, appJson))
         .callTimeout(120, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(120, TimeUnit.SECONDS)
