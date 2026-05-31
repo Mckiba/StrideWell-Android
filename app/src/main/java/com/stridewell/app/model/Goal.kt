@@ -2,20 +2,26 @@ package com.stridewell.app.model
 
 import com.stridewell.app.util.DateUtils
 import java.util.Calendar
-import java.util.Date
 import kotlinx.serialization.Serializable
 import kotlin.math.ceil
 
 @Serializable
 data class GoalSummary(
-    val goal_race_date: String?,
-    val goal_race_distance_m: Double?,
+    val goal_type: String,                       // "race" | "fitness"
+    val goal_race_date: String? = null,          // "YYYY-MM-DD" — null for fitness goals
+    val goal_race_distance_m: Double? = null,    // null for fitness goals
+    val goal_race_distance_label: String? = null,// server-formatted, e.g. "10K"
     val plan_start_date: String,
     val horizon_days: Int,
-    val total_distance_m: Double
+    val weeks_elapsed: Int,
+    val weeks_remaining: Int,
+    val runs_completed: Int,
+    val runs_planned_to_date: Int,
+    val distance_completed_m: Double             // plan-attributable distance only
 )
 
 fun GoalSummary.goalName(): String {
+    goal_race_distance_label?.takeIf { it.isNotEmpty() }?.let { return it }
     val distance = goal_race_distance_m ?: return "Training Goal"
     return when {
         distance < 5500 -> "5K"
@@ -32,11 +38,7 @@ fun GoalSummary.goalName(): String {
 fun GoalSummary.totalWeeks(): Int =
     ceil(horizon_days / 7.0).toInt()
 
-fun GoalSummary.weeksCompleted(now: Date = Date()): Int {
-    val start = DateUtils.parse(plan_start_date) ?: return 0
-    val daysElapsed = ((now.time - start.time) / (24L * 60L * 60L * 1000L)).toInt() / 7
-    return daysElapsed.coerceIn(0, totalWeeks())
-}
+fun GoalSummary.weeksCompleted(): Int = weeks_elapsed
 
 fun GoalSummary.formattedRaceDate(): String? {
     val date = goal_race_date?.let(DateUtils::parse) ?: return null
