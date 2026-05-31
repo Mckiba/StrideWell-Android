@@ -45,6 +45,7 @@ import com.stridewell.R
 import com.stridewell.app.ui.main.rememberNavBarBottomInset
 import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.model.PlanDay
+import com.stridewell.app.model.PlanDayStatus
 import com.stridewell.app.model.PlanWeekResponse
 import com.stridewell.app.model.Run
 import com.stridewell.app.model.WorkoutType
@@ -120,7 +121,18 @@ fun HomeScreen(
                         onOpenChatWithMessage = onOpenChatWithMessage,
                         onDismissActivityBanner = viewModel::dismissActivityBanner,
                         onOpenReflection = { showReflection = true },
-                        onWorkoutClick = { selectedWorkout = it },
+                        // Completed/modified days deep-link to RunDetailScreen via
+                        // the linked run; everything else opens the workout sheet.
+                        onWorkoutClick = { day ->
+                            val linked = day.linkedRun
+                            if (linked != null &&
+                                (day.status == PlanDayStatus.COMPLETED || day.status == PlanDayStatus.MODIFIED)
+                            ) {
+                                onNavigateToRunDetail(linked.id)
+                            } else {
+                                selectedWorkout = day
+                            }
+                        },
                         onNavigateToRunDetail = onNavigateToRunDetail,
                     )
                 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.stridewell.app.model.PlanDayStatus
 import com.stridewell.app.ui.background.heatmap.HeatmapBackgroundView
 import com.stridewell.app.ui.background.heatmap.HeatmapViewModel
 import com.stridewell.app.ui.main.rememberNavBarBottomInset
@@ -41,6 +42,7 @@ import com.stridewell.app.util.DateUtils
 fun PlanScreen(
     onOpenPlanChange: () -> Unit,
     onOpenWeeklySummary: () -> Unit = {},
+    onNavigateToRunDetail: (String) -> Unit = {},
     hasLocationPermission: Boolean,
     heatmapViewModel: HeatmapViewModel,
     modifier: Modifier = Modifier,
@@ -155,7 +157,18 @@ fun PlanScreen(
                                 WorkoutCard(
                                     day = day,
                                     unitSystem = uiState.unitSystem,
-                                    onClick = { viewModel.selectDay(day) }
+                                    // Completed/modified days deep-link to
+                                    // RunDetailScreen; everything else opens the sheet.
+                                    onClick = {
+                                        val linked = day.linkedRun
+                                        if (linked != null &&
+                                            (day.status == PlanDayStatus.COMPLETED || day.status == PlanDayStatus.MODIFIED)
+                                        ) {
+                                            onNavigateToRunDetail(linked.id)
+                                        } else {
+                                            viewModel.selectDay(day)
+                                        }
+                                    }
                                 )
                             }
                         }

@@ -166,6 +166,7 @@ fun MainContainerScreen(
                 MainTab.Plan -> PlanScreen(
                     onOpenPlanChange = { onOpenPlanChange(null) },
                     onOpenWeeklySummary = onOpenWeeklySummary,
+                    onNavigateToRunDetail = onNavigateToRunDetail,
                     hasLocationPermission = hasLocationPermission,
                     heatmapViewModel = heatmapViewModel,
                     modifier = Modifier

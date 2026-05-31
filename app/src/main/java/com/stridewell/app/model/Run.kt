@@ -18,7 +18,10 @@ data class Run(
     val duration_s: Int,
     val avg_pace_s_per_km: Double? = null,
     val elevation_gain_m: Double,
-    val route: RunRoute? = null
+    val route: RunRoute? = null,
+    // YYYY-MM-DD of the plan day this run fulfilled, or null for standalone runs
+    // (historical, cross-training, outside the active plan). From /runs/recent.
+    val plan_day_date: String? = null,
 )
 
 @Serializable
