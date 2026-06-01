@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.stridewell.app.api.AnalysisApi
 import com.stridewell.app.api.AuthApi
 import com.stridewell.app.api.ChatApi
+import com.stridewell.app.api.HomeCardsApi
 import com.stridewell.app.api.NotificationsApi
 import com.stridewell.app.api.OnboardingApi
 import com.stridewell.app.api.PlanApi
@@ -121,6 +122,11 @@ object AppModule {
     @Singleton
     fun provideSettingsApi(retrofit: Retrofit): SettingsApi =
         retrofit.create(SettingsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideHomeCardsApi(retrofit: Retrofit): HomeCardsApi =
+        retrofit.create(HomeCardsApi::class.java)
 
     // ── DataStore ─────────────────────────────────────────────────────────────
 

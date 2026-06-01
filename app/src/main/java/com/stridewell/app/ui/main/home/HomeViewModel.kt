@@ -5,11 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.data.ActivityRepository
 import com.stridewell.app.data.ConnectivityRepository
+import com.stridewell.app.data.HomeCardsRepository
+import com.stridewell.app.data.LocationRepository
 import com.stridewell.app.data.PlanRepository
 import com.stridewell.app.data.RunsRepository
 import com.stridewell.app.data.SettingsRepository
 import com.stridewell.app.model.DecisionRecord
 import com.stridewell.app.model.GoalSummary
+import com.stridewell.app.model.HomeCard
 import com.stridewell.app.model.PlanDay
 import com.stridewell.app.model.PlanWeekResponse
 import com.stridewell.app.model.Run
@@ -31,7 +34,9 @@ class HomeViewModel @Inject constructor(
     private val runsRepository: RunsRepository,
     private val settingsRepository: SettingsRepository,
     private val activityRepository: ActivityRepository,
-    private val connectivityRepository: ConnectivityRepository
+    private val connectivityRepository: ConnectivityRepository,
+    private val homeCardsRepository: HomeCardsRepository,
+    private val locationRepository: LocationRepository
 ) : ViewModel() {
 
     private data class BaseInputs(
@@ -62,7 +67,8 @@ class HomeViewModel @Inject constructor(
         val showActivityBanner: Boolean = false,
         val latestSyncedRunId: String? = null,
         val isOffline: Boolean = false,
-        val showHeatmapOnly: Boolean = false
+        val showHeatmapOnly: Boolean = false,
+        val homeCards: List<HomeCard> = emptyList()
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -111,7 +117,8 @@ class HomeViewModel @Inject constructor(
                     showActivityBanner = showActivityBanner,
                     latestSyncedRunId = syncedRunId,
                     isOffline = _uiState.value.isOffline,
-                    showHeatmapOnly = showHeatmapOnly
+                    showHeatmapOnly = showHeatmapOnly,
+                    homeCards = _uiState.value.homeCards
                 )
             }.collect { derived ->
                 _uiState.value = derived
@@ -131,6 +138,16 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(screenState = ScreenState.Loading) }
             loadData()
+        }
+    }
+
+    /** Fetches weather cards for the device location. Silent on any failure. */
+    fun fetchWeatherCards(hasPermission: Boolean) {
+        viewModelScope.launch {
+            val coordinate = locationRepository.requestLocation(hasPermission)
+            val units = settingsRepository.getUnitSystem()
+            val cards = homeCardsRepository.fetch(coordinate, units)
+            _uiState.update { it.copy(homeCards = cards) }
         }
     }
 
