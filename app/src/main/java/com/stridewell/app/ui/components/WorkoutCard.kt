@@ -213,10 +213,10 @@ private fun CompletedLayout(
     // Divider between planned and actual.
     Spacer(
         modifier = Modifier
-            .alpha(0.3f)
+            .alpha(0.06f)
             .fillMaxWidth()
             .height(1.dp)
-            .background(CardDivider),
+            .background(MaterialTheme.colorScheme.onSurface),
     )
 
     ActualStatsRow(run = linkedRun, unitSystem = unitSystem)

@@ -38,6 +38,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.stridewell.BuildConfig
+import com.stridewell.app.data.HomeCardsRepository
 import com.stridewell.app.ui.main.rememberNavBarBottomInset
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
@@ -79,6 +81,40 @@ fun SettingsScreen(
         item { TrainingPreferencesSection(uiState, viewModel, onOpenFitnessProfile) }
         item { CoachingNotificationsSection(uiState, viewModel) }
         item { AccountSection(uiState, viewModel) }
+        if (BuildConfig.DEBUG) {
+            item { DeveloperSection(uiState, viewModel) }
+        }
+    }
+}
+
+// ── DEBUG: Developer ─────────────────────────────────────────────────────────
+
+@Composable
+private fun DeveloperSection(
+    uiState: SettingsViewModel.UiState,
+    viewModel: SettingsViewModel
+) {
+    SettingsCard(title = "Developer") {
+        Column(modifier = Modifier.fillMaxWidth().padding(Spacing.md)) {
+            Text("Weather Cards Location", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text  = "Force a test location for /home/cards",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.size(Spacing.sm))
+            val entries = HomeCardsRepository.DebugLocation.entries
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                entries.forEachIndexed { index, loc ->
+                    SegmentedButton(
+                        selected = uiState.debugWeatherLocation == loc,
+                        onClick  = { viewModel.onDebugWeatherLocationChanged(loc) },
+                        shape    = SegmentedButtonDefaults.itemShape(index, entries.size),
+                        label    = { Text(loc.label) }
+                    )
+                }
+            }
+        }
     }
 }
 
