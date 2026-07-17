@@ -10,6 +10,7 @@ sealed class Route(val path: String) {
     object SignUp   : Route("sign_up")
 
     // Onboarding
+    object UnitPreference   : Route("onboarding/unit_preference")   // S0 unit choice (fresh entry)
     object StravaConnect    : Route("onboarding/strava_connect")   // S1 IntegrationsScreen
     object IntakeInterview  : Route("onboarding/intake_interview") // V1 legacy; kept until fully removed
     object PlanBuilding     : Route("onboarding/plan_building")    // S7
@@ -53,13 +54,16 @@ sealed class Route(val path: String) {
         fun forOnboardingStatus(status: OnboardingStatus?): String = when (status) {
             OnboardingStatus.complete,
             OnboardingStatus.skipped -> Main.path
-            // V2 guided flow: (StravaConnect) is the universal entry point for an
-            // in-progress interview. It performs the one-shot resume-advance to the first
-            // unsatisfied screen (or rests on S1 while the data-connection decision is pending).
+            // Fresh onboarding (no session yet) opens on the unit-preference step, which
+            // then pushes StravaConnect.
+            null -> UnitPreference.path
+            // V2 guided flow: (StravaConnect) is the resume entry point for an in-progress
+            // interview. It performs the one-shot resume-advance to the first unsatisfied
+            // screen (or rests on S1 while the data-connection decision is pending). The unit
+            // step is skipped on resume — it was chosen when the session started.
             OnboardingStatus.interview,
             OnboardingStatus.analyzing,
-            OnboardingStatus.pending,
-            null -> StravaConnect.path
+            OnboardingStatus.pending -> StravaConnect.path
         }
 
         fun planChange(encodedRecord: String? = null) = PlanChange.destination(encodedRecord)

@@ -42,6 +42,7 @@ import com.stridewell.app.ui.onboarding.IntakeInterviewScreen
 import com.stridewell.app.ui.onboarding.PlanBuildingScreen
 import com.stridewell.app.ui.onboarding.PlanRevealScreen
 import com.stridewell.app.ui.onboarding.StravaConnectScreen
+import com.stridewell.app.ui.onboarding.UnitPreferenceScreen
 import com.stridewell.app.ui.onboarding.guided.GoalScreen
 import com.stridewell.app.ui.onboarding.guided.HistoryConfirmScreen
 import com.stridewell.app.ui.onboarding.guided.LessonsScreen
@@ -168,6 +169,16 @@ fun StridewellNavHost(
         }
 
         // ── Onboarding ────────────────────────────────────────────────────────
+
+        // S0. Unit preference — the fresh-onboarding entry. Begin pushes StravaConnect and
+        // drops the unit step from the back stack.
+        composable(Route.UnitPreference.path) {
+            UnitPreferenceScreen(onNavigate = { route ->
+                navController.navigate(route) {
+                    popUpTo(Route.UnitPreference.path) { inclusive = true }
+                }
+            })
+        }
 
         // S1. Forward moves preserve the back stack so the athlete can return; advancing into
         // plan building clears the intake stack (S1..current) so back doesn't re-enter intake.

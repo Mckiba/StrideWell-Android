@@ -11,8 +11,10 @@ import com.stridewell.app.model.ProactiveCategoriesEnabled
 import com.stridewell.app.model.ProactivePreferencesRequest
 import com.stridewell.app.model.ProactivePreferencesStoredResponse
 import com.stridewell.app.model.ProactiveQuietHours
+import com.stridewell.app.model.UserUnitsRequest
 import java.io.IOException
 import com.stridewell.app.util.AppTheme
+import com.stridewell.app.util.UnitPreference
 import com.stridewell.app.util.UnitSystem
 import java.util.Locale
 import java.util.TimeZone
@@ -111,10 +113,17 @@ class SettingsRepository @Inject constructor(
     suspend fun getUnitSystem(): UnitSystem =
         dataStore.data.first()[KEY_UNIT_SYSTEM]?.toUnitSystem() ?: defaultUnitSystem()
 
+    /**
+     * Persists the unit preference locally, updates the in-memory snapshot for synchronous
+     * readers, and best-effort syncs it to the backend so the Coach converses in this unit.
+     * A sync failure is non-fatal — the local value drives all formatting.
+     */
     suspend fun setUnitSystem(unitSystem: UnitSystem) {
         dataStore.edit { prefs ->
             prefs[KEY_UNIT_SYSTEM] = unitSystem.name
         }
+        UnitPreference.current = unitSystem
+        safeCall { settingsApi.putUnits(UserUnitsRequest(unitSystem.name.lowercase())) }
     }
 
     suspend fun setAppTheme(theme: AppTheme) {

@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +19,7 @@ import com.stridewell.app.navigation.StridewellNavHost
 import com.stridewell.app.ui.auth.LaunchViewModel
 import com.stridewell.app.ui.theme.StridewellTheme
 import com.stridewell.app.util.AppTheme
+import com.stridewell.app.util.UnitPreference
 import com.stridewell.app.util.isDark
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -82,6 +84,12 @@ class MainActivity : ComponentActivity() {
             val appTheme by settingsRepository.appTheme
                 .collectAsStateWithLifecycle(initialValue = AppTheme.DEVICE)
             val systemIsDark = isSystemInDarkTheme()
+
+            // Keep the synchronous unit snapshot (read by OnboardingUnits) in sync with the
+            // stored preference across the whole app lifetime.
+            LaunchedEffect(Unit) {
+                settingsRepository.unitSystem.collect { UnitPreference.current = it }
+            }
 
             StridewellTheme(darkTheme = appTheme.isDark(systemIsDark)) {
                 val launchState by launchViewModel.state.collectAsStateWithLifecycle()
