@@ -130,7 +130,7 @@ fun GoalCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = FormatUtils.distance(summary.total_distance_m, unitSystem),
+                    text = FormatUtils.distance(summary.distance_completed_m, unitSystem),
                     style = goalStatValueStyle(),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -167,7 +167,7 @@ private fun GoalCardPreview() {
                     goal_race_distance_m = 21097.5,
                     plan_start_date = "2026-08-03",
                     horizon_days = 63,
-                    total_distance_m = 459027.8
+                    distance_completed_m = 459027.8
                 ),
                 unitSystem = UnitSystem.IMPERIAL
             )
@@ -177,7 +177,7 @@ private fun GoalCardPreview() {
                     goal_race_distance_m = null,
                     plan_start_date = "2026-08-03",
                     horizon_days = 42,
-                    total_distance_m = 128748.0
+                    distance_completed_m = 128748.0
                 ),
                 unitSystem = UnitSystem.METRIC
             )

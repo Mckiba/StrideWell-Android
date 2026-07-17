@@ -12,7 +12,7 @@ data class GoalSummary(
     val goal_race_distance_m: Double?,
     val plan_start_date: String,
     val horizon_days: Int,
-    val total_distance_m: Double
+    val distance_completed_m: Double
 )
 
 fun GoalSummary.goalName(): String {
