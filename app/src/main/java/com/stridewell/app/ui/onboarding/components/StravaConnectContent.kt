@@ -3,16 +3,20 @@ package com.stridewell.app.ui.onboarding.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.stridewell.R
 import com.stridewell.app.ui.components.PrimaryButton
 import com.stridewell.app.ui.onboarding.StravaConnectViewModel.ScreenState
+import com.stridewell.app.ui.onboarding.guided.ExpandableSheetScaffold
 import com.stridewell.app.ui.theme.AccentLight
 import com.stridewell.app.ui.theme.InterFamily
 import com.stridewell.app.ui.theme.Spacing
@@ -55,148 +60,195 @@ import com.stridewell.app.ui.theme.StridewellTheme
 @Composable
 fun StravaConnectContent(
     screenState: ScreenState,
-    onConnect: () -> Unit       = {},
-    onSkip: () -> Unit          = {},
-    onContinue: () -> Unit      = {},
-    onRetrySession: () -> Unit  = {},
-    onSignOut: () -> Unit       = {},
+    onConnect: () -> Unit                = {},
+    onContinueWithoutStrava: () -> Unit  = {},
+    onSkipOnboarding: () -> Unit         = {},
+    onContinueForward: () -> Unit        = {},
+    onRetrySession: () -> Unit           = {},
+    onSignOut: () -> Unit                = {},
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    val showContinueWithoutStrava = screenState is ScreenState.Idle ||
+        screenState is ScreenState.OAuthError ||
+        screenState is ScreenState.Starting
 
-        // ── Background image ──────────────────────────────────────────────────
-        Image(
-            painter            = painterResource(R.drawable.onboarding_background),
-            contentDescription = null,
-            modifier           = Modifier.fillMaxSize(),
-            contentScale       = ContentScale.Crop
-        )
+    val collapsedFraction = 0.40f
 
-        // Dark scrim so text stays legible over any photo
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
-        )
-
-        // ── Content column ────────────────────────────────────────────────────
-        Column(
-            modifier            = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.weight(1f))
-
-            // ── Circular modal card ───────────────────────────────────────────
+    ExpandableSheetScaffold(
+        collapsedFraction = collapsedFraction,
+        expandedFraction  = 0.92f,
+        sheetColor        = Color.Black,
+        handleColor       = Color.White.copy(alpha = 0.4f),
+        background = {
+            // ── Background image ──────────────────────────────────────────────
+            Image(
+                painter            = painterResource(R.drawable.onboarding_background),
+                contentDescription = null,
+                modifier           = Modifier.fillMaxSize(),
+                contentScale       = ContentScale.Crop
+            )
+            // Dark scrim so text stays legible over any photo
             Box(
                 modifier = Modifier
-                    .shadow(
-                        elevation    = 24.dp,
-                        shape        = CircleShape,
-                        ambientColor = Color.Black.copy(alpha = 0.25f)
-                    )
-                    .size(300.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.59f))
-                    .border(3.dp, Color(0xFFF9F0F0), CircleShape),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.45f))
+            )
+
+            // Title + Strava circle occupy the area above the collapsed sheet; the circle
+            // is centered within that visible area so it stays clear of the resting sheet.
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .fillMaxHeight(1f - collapsedFraction),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                Text(
+                    text       = "You, in Context",
+                    color      = Color.White,
+                    fontFamily = InterFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 50.sp,
+                    lineHeight = 54.sp,
+                    textAlign  = TextAlign.Center,
+                    modifier   = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = Spacing.sm)
+                        .padding(top = Spacing.lg)
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // ── Circular modal card ───────────────────────────────────────
+                Box(
+                    modifier = Modifier
+                        .shadow(
+                            elevation    = 24.dp,
+                            shape        = CircleShape,
+                            ambientColor = Color.Black.copy(alpha = 0.25f)
+                        )
+                        .size(300.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.59f))
+                        .border(3.dp, Color(0xFFF9F0F0), CircleShape),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Strava logo
-                    Image(
-                        painter            = painterResource(R.drawable.strava_logo),
-                        contentDescription = "Strava",
-                        modifier           = Modifier
-                            .width(160.dp)
-                            .height(65.dp),
-                        contentScale       = ContentScale.Fit
-                    )
-
-                    // Status indicator
-                    Box(
-                        modifier         = Modifier.height(44.dp),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                     ) {
-                        StatusRow(screenState)
-                    }
+                        Image(
+                            painter            = painterResource(R.drawable.strava_logo),
+                            contentDescription = "Strava",
+                            modifier           = Modifier.width(160.dp).height(65.dp),
+                            contentScale       = ContentScale.Fit
+                        )
 
-                    // Conditional action button
-                    when (screenState) {
-                        ScreenState.Starting,
-                        ScreenState.Connecting,
-                        ScreenState.Analyzing  -> Unit
+                        Box(
+                            modifier         = Modifier.height(44.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            StatusRow(screenState)
+                        }
 
-                        ScreenState.Connected  ->
-                            PrimaryButton(
-                                text      = "Continue",
-                                onClick   = onContinue,
-                                modifier  = Modifier.padding(horizontal = 32.dp)
-                            )
+                        when (screenState) {
+                            ScreenState.Starting,
+                            ScreenState.Connecting,
+                            ScreenState.Analyzing  -> Unit
 
-                        is ScreenState.SessionError ->
-                            PrimaryButton(
-                                text      = "Try again",
-                                onClick   = onRetrySession,
-                                modifier  = Modifier.padding(horizontal = 32.dp)
-                            )
+                            ScreenState.Connected  ->
+                                PrimaryButton(text = "Continue", onClick = onContinueForward, modifier = Modifier.padding(horizontal = 32.dp))
 
-                        ScreenState.Idle,
-                        is ScreenState.OAuthError ->
-                            PrimaryButton(
-                                text      = "Connect",
-                                onClick   = onConnect,
-                                modifier  = Modifier.padding(horizontal = 32.dp)
-                            )
+                            is ScreenState.SessionError ->
+                                PrimaryButton(text = "Try again", onClick = onRetrySession, modifier = Modifier.padding(horizontal = 32.dp))
+
+                            ScreenState.Idle,
+                            is ScreenState.OAuthError ->
+                                PrimaryButton(text = "Connect", onClick = onConnect, modifier = Modifier.padding(horizontal = 32.dp))
+                        }
                     }
                 }
+
+                Spacer(modifier = Modifier.weight(1f))
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // ── Bottom info panel ─────────────────────────────────────────────
+        },
+        sheetContent = { _ ->
+            // ── Bottom info panel (scrollable) ────────────────────────────────
             Column(
                 modifier            = Modifier
                     .fillMaxWidth()
-                    .background(
-                        color = Color.Black,
-                        shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)
-                    )
-                    .padding(Spacing.lg),
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = Spacing.lg)
+                    .padding(bottom = Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text  = "Let's make this plan about ",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text       = "You.",
+                        color      = Color.White,
+                        fontFamily = InterFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 20.sp
+                    )
+                }
+
                 Text(
-                    text  = "Let's make this plan about You. Together.",
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyLarge
+                    text       = "Together.",
+                    color      = Color.White,
+                    fontFamily = InterFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 32.sp
                 )
+
                 Text(
-                    text  = "Connect your Strava to help us build a plan tailored to your history and goals.",
-                    color = Color.White.copy(alpha = 0.75f),
+                    text  = "Connect your Strava to help us build a plan tailored to your history and goals",
+                    color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
+
+                // Continue without Strava — the interview still happens, we just ask more.
+                if (showContinueWithoutStrava) {
+                    PrimaryButton(
+                        text     = "Continue without Strava",
+                        onClick  = onContinueWithoutStrava,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        text  = "You can still build a personal plan — we'll just ask a few more questions.",
+                        color = Color.White.copy(alpha = 0.75f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
                 Text(
-                    text  = "Skipping the onboarding will result in a default plan. For a more personal experience the early onboarding and Strava integration is recommended.",
-                    color = Color.White.copy(alpha = 0.55f),
-                    style = MaterialTheme.typography.labelMedium
+                    text     = "Skipping the onboarding will result in a default plan. For a more personal experience the early onboarding and Strava integration is recommended.",
+                    color    = Color.White.copy(alpha = 0.75f),
+                    style    = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = Spacing.xs)
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.sm))
-
                 TextButton(
-                    onClick  = onSkip,
-                    modifier = Modifier.fillMaxWidth()
+                    onClick        = onSkipOnboarding,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
                 ) {
                     Text(
-                        text  = "Skip for now",
-                        color = Color.White.copy(alpha = 0.6f),
-                        style = MaterialTheme.typography.bodyMedium
+                        text       = "Skip onboarding",
+                        color      = Color.White.copy(alpha = 0.85f),
+                        style      = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium
                     )
                 }
 
                 TextButton(
-                    onClick  = onSignOut,
-                    modifier = Modifier.fillMaxWidth()
+                    onClick        = onSignOut,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                    modifier       = Modifier.padding(top = Spacing.xs)
                 ) {
                     Text(
                         text  = "Sign out",
@@ -206,7 +258,7 @@ fun StravaConnectContent(
                 }
             }
         }
-    }
+    )
 }
 
 // ── Status row ────────────────────────────────────────────────────────────────
