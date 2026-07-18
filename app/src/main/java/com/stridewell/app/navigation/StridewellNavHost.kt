@@ -42,6 +42,19 @@ import com.stridewell.app.ui.onboarding.IntakeInterviewScreen
 import com.stridewell.app.ui.onboarding.PlanBuildingScreen
 import com.stridewell.app.ui.onboarding.PlanRevealScreen
 import com.stridewell.app.ui.onboarding.StravaConnectScreen
+import com.stridewell.app.ui.onboarding.UnitPreferenceScreen
+import com.stridewell.app.ui.onboarding.guided.GoalScreen
+import com.stridewell.app.ui.onboarding.guided.HistoryConfirmScreen
+import com.stridewell.app.ui.onboarding.guided.LessonsScreen
+import com.stridewell.app.ui.onboarding.guided.ManualBaselineScreen
+import com.stridewell.app.ui.onboarding.guided.RoutinesScreen
+import com.stridewell.app.ui.onboarding.guided.SpeedworkScreen
+import com.stridewell.app.ui.onboarding.guided.GoalScreen
+import com.stridewell.app.ui.onboarding.guided.HistoryConfirmScreen
+import com.stridewell.app.ui.onboarding.guided.LessonsScreen
+import com.stridewell.app.ui.onboarding.guided.ManualBaselineScreen
+import com.stridewell.app.ui.onboarding.guided.RoutinesScreen
+import com.stridewell.app.ui.onboarding.guided.SpeedworkScreen
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
@@ -157,15 +170,40 @@ fun StridewellNavHost(
 
         // ── Onboarding ────────────────────────────────────────────────────────
 
-        composable(Route.StravaConnect.path) {
-            StravaConnectScreen(
-                onNavigateToInterview = {
-                    navController.navigate(Route.IntakeInterview.path) {
-                        popUpTo(Route.StravaConnect.path) { inclusive = true }
-                    }
+        // S0. Unit preference — the fresh-onboarding entry. Begin pushes StravaConnect and
+        // drops the unit step from the back stack.
+        composable(Route.UnitPreference.path) {
+            UnitPreferenceScreen(onNavigate = { route ->
+                navController.navigate(route) {
+                    popUpTo(Route.UnitPreference.path) { inclusive = true }
                 }
-            )
+            })
         }
+
+        // S1. Forward moves preserve the back stack so the athlete can return; advancing into
+        // plan building clears the intake stack (S1..current) so back doesn't re-enter intake.
+        composable(Route.StravaConnect.path) {
+            StravaConnectScreen(onNavigate = { route -> advanceOnboarding(navController, route) })
+        }
+        composable(Route.HistoryConfirm.path) {
+            HistoryConfirmScreen(onNavigate = { route -> advanceOnboarding(navController, route) })
+        }
+        composable(Route.ManualBaseline.path) {
+            ManualBaselineScreen(onNavigate = { route -> advanceOnboarding(navController, route) })
+        }
+        composable(Route.Goal.path) {
+            GoalScreen(onNavigate = { route -> advanceOnboarding(navController, route) })
+        }
+        composable(Route.Routines.path) {
+            RoutinesScreen(onNavigate = { route -> advanceOnboarding(navController, route) })
+        }
+        composable(Route.Speedwork.path) {
+            SpeedworkScreen(onNavigate = { route -> advanceOnboarding(navController, route) })
+        }
+        composable(Route.Lessons.path) {
+            LessonsScreen(onNavigate = { route -> advanceOnboarding(navController, route) })
+        }
+        // Legacy V1 single-chat interview — no longer in the guided flow, kept until removed.
         composable(Route.IntakeInterview.path) {
             IntakeInterviewScreen(
                 onNavigateToPlanBuilding = {
@@ -278,5 +316,20 @@ fun StridewellNavHost(
         composable(Route.WeeklySummary.path) {
             WeeklySummaryScreen(onBack = { navController.popBackStack() })
         }
+    }
+}
+
+/**
+ * Navigate to the next guided onboarding screen. Advancing into plan building clears the
+ * intake stack (Connect Screen through the current screen); every other move is a plain push so back
+ * navigation returns to earlier screens.
+ */
+private fun advanceOnboarding(navController: NavHostController, route: String) {
+    if (route == Route.PlanBuilding.path) {
+        navController.navigate(route) {
+            popUpTo(Route.StravaConnect.path) { inclusive = true }
+        }
+    } else {
+        navController.navigate(route) { launchSingleTop = true }
     }
 }

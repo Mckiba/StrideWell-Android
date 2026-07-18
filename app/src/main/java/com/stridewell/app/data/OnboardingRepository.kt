@@ -36,6 +36,11 @@ class OnboardingRepository @Inject constructor(
     companion object {
         private val KEY_COMPLETE = booleanPreferencesKey("onboarding_complete")
         private val KEY_CONVERSATION_ID = stringPreferencesKey("onboarding_conversation_id")
+
+        // V2.1 — the athlete's data-connection decision on S1 (connected Strava, continued
+        // without it, or skipped). Gates resume: while false, the connect screen stays put
+        // so the athlete can still connect their data. Not part of confirmed_fields.
+        private val KEY_DATA_CONNECTION_DECIDED = booleanPreferencesKey("onboarding_data_connection_decided")
     }
 
     // ── Onboarding ────────────────────────────────────────────────────────────
@@ -80,6 +85,14 @@ class OnboardingRepository @Inject constructor(
     suspend fun getConversationId(): String? =
         dataStore.data.first()[KEY_CONVERSATION_ID]
 
+    /** whether the athlete has made a data-connection choice on the connect screen. */
+    suspend fun hasDecidedConnection(): Boolean =
+        dataStore.data.first()[KEY_DATA_CONNECTION_DECIDED] ?: false
+
+    suspend fun markConnectionDecided() {
+        dataStore.edit { prefs -> prefs[KEY_DATA_CONNECTION_DECIDED] = true }
+    }
+
     suspend fun saveConversationId(conversationId: String) {
         dataStore.edit { prefs -> prefs[KEY_CONVERSATION_ID] = conversationId }
     }
@@ -92,6 +105,7 @@ class OnboardingRepository @Inject constructor(
         dataStore.edit { prefs ->
             prefs[KEY_COMPLETE] = true
             prefs.remove(KEY_CONVERSATION_ID)
+            prefs.remove(KEY_DATA_CONNECTION_DECIDED)
         }
     }
 
@@ -99,6 +113,7 @@ class OnboardingRepository @Inject constructor(
         dataStore.edit { prefs ->
             prefs.remove(KEY_COMPLETE)
             prefs.remove(KEY_CONVERSATION_ID)
+            prefs.remove(KEY_DATA_CONNECTION_DECIDED)
         }
     }
 

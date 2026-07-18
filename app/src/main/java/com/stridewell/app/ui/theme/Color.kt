@@ -40,6 +40,12 @@ val WarningContainerDark = Color(0xFF2D2200)
 val OnWarningContainerDark = Color(0xFFF0B429)
 val WarningBadgeDark = Color(0xFF4D3800)
 
+// Plan-day card tokens. Completed reuses the brand accent (primary); missed is
+// grey. Planned/rest have no stroke.
+val CardBorderMissed    = Color(0xFFA6A6A6)
+val TextMissed          = Color(0xFFA6A6A6)
+val CardDivider         = Color(0xFFD9D9D9)
+
 // MARK: - Dark color scheme
 val md_dark_primary           = Color(0xFF5E9CFF)
 val md_dark_onPrimary         = Color(0xFF003258)

@@ -197,11 +197,6 @@ private fun AnimatedPlanPulse(isActive: Boolean) {
                     shape = CircleShape
                 )
         )
-        Text(
-            text = "AI",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onPrimary
-        )
     }
 }
 

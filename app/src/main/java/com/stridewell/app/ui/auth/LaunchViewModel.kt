@@ -77,7 +77,7 @@ class LaunchViewModel @Inject constructor(
                         _state.value = if (onboardingDone) {
                             LaunchState.Authenticated
                         } else {
-                            LaunchState.NeedsOnboarding(Route.IntakeInterview.path)
+                            LaunchState.NeedsOnboarding(Route.StravaConnect.path)
                         }
                     } else {
                         // 401 or other auth error — token rejected, force sign-in
@@ -120,9 +120,11 @@ class LaunchViewModel @Inject constructor(
             is ApiResult.Success -> when {
                 result.data.first_plan_version_id != null -> Route.PlanReveal.path
                 result.data.intake_complete -> Route.PlanBuilding.path
-                else -> Route.IntakeInterview.path
+                // S1 hydrates the session store and performs the resume-advance to the first
+                // unsatisfied guided screen (or rests on S1 until a data-connection decision).
+                else -> Route.StravaConnect.path
             }
-            is ApiResult.Error -> Route.IntakeInterview.path
+            is ApiResult.Error -> Route.StravaConnect.path
         }
     }
 }

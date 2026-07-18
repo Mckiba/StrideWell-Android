@@ -8,6 +8,7 @@ import com.stridewell.app.api.StravaApi
 import com.stridewell.app.data.ActivityRepository
 import com.stridewell.app.data.AuthRepository
 import com.stridewell.app.data.ChatRepository
+import com.stridewell.app.data.HomeCardsRepository
 import com.stridewell.app.data.OnboardingRepository
 import com.stridewell.app.data.PlanRepository
 import com.stridewell.app.data.RunsRepository
@@ -43,6 +44,7 @@ class SettingsViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val runsRepository: RunsRepository,
     private val activityRepository: ActivityRepository,
+    private val homeCardsRepository: HomeCardsRepository,
     private val tokenStore: TokenStore,
     private val heatmapCache: HeatmapCache,
     private val stravaApi: StravaApi,
@@ -89,7 +91,10 @@ class SettingsViewModel @Inject constructor(
         val deleteState:             DeleteState = DeleteState.Idle,
         val showDisconnectDialog:    Boolean     = false,
         val showDeleteDialog:        Boolean     = false,
-        val showDeleteConfirmDialog: Boolean     = false
+        val showDeleteConfirmDialog: Boolean     = false,
+        // DEBUG-only: forces weather-card fetches to a preset location.
+        val debugWeatherLocation: HomeCardsRepository.DebugLocation =
+            HomeCardsRepository.DebugLocation.OFF
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -247,6 +252,12 @@ class SettingsViewModel @Inject constructor(
 
     fun onAppThemeChanged(theme: AppTheme) {
         viewModelScope.launch { settingsRepository.setAppTheme(theme) }
+    }
+
+    // DEBUG-only: applied on the next Home appearance (re-fetches weather cards).
+    fun onDebugWeatherLocationChanged(location: HomeCardsRepository.DebugLocation) {
+        homeCardsRepository.debugLocation = location
+        _uiState.update { it.copy(debugWeatherLocation = location) }
     }
 
     fun onReflectionRemindersChanged(enabled: Boolean) {

@@ -1,5 +1,8 @@
 package com.stridewell.app.ui.main.home
 
+import android.content.Context
+import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,7 +48,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stridewell.R
 import com.stridewell.app.ui.main.rememberNavBarBottomInset
 import com.stridewell.app.model.DecisionRecord
+import com.stridewell.app.model.HomeCard
 import com.stridewell.app.model.PlanDay
+import com.stridewell.app.model.PlanDayStatus
 import com.stridewell.app.model.PlanWeekResponse
 import com.stridewell.app.model.Run
 import com.stridewell.app.model.WorkoutType
@@ -56,7 +62,9 @@ import com.stridewell.app.ui.components.ActivityCard
 import com.stridewell.app.ui.components.ActivityBannerView
 import com.stridewell.app.ui.components.GoalCard
 import com.stridewell.app.ui.components.SnapCarousel
+import com.stridewell.app.ui.components.WeatherBannerView
 import com.stridewell.app.ui.components.WorkoutCard
+import com.stridewell.app.ui.components.weatherCardImage
 import com.stridewell.app.ui.main.reflection.ReflectionScreen
 import com.stridewell.app.ui.theme.SofiaSansFamily
 import com.stridewell.app.ui.theme.Spacing
@@ -120,7 +128,18 @@ fun HomeScreen(
                         onOpenChatWithMessage = onOpenChatWithMessage,
                         onDismissActivityBanner = viewModel::dismissActivityBanner,
                         onOpenReflection = { showReflection = true },
-                        onWorkoutClick = { selectedWorkout = it },
+                        // Completed/modified days deep-link to RunDetailScreen via
+                        // the linked run; everything else opens the workout sheet.
+                        onWorkoutClick = { day ->
+                            val linked = day.linkedRun
+                            if (linked != null &&
+                                (day.status == PlanDayStatus.COMPLETED || day.status == PlanDayStatus.MODIFIED)
+                            ) {
+                                onNavigateToRunDetail(linked.id)
+                            } else {
+                                selectedWorkout = day
+                            }
+                        },
                         onNavigateToRunDetail = onNavigateToRunDetail,
                     )
                 }
@@ -179,6 +198,7 @@ fun HomeScreen(
 
     LaunchedEffect(hasLocationPermission) {
         weatherViewModel.fetchIfNeeded(hasLocationPermission)
+        viewModel.fetchWeatherCards(hasLocationPermission)
     }
 }
 
@@ -256,13 +276,29 @@ private fun HomeContent(
     onWorkoutClick: (PlanDay) -> Unit,
     onNavigateToRunDetail: (String) -> Unit,
 ) {
+    val context = LocalContext.current
     val cards = remember(
         uiState.hasPlanChanged,
         uiState.latestDecision,
         uiState.showActivityBanner,
-        uiState.latestSyncedRunId
+        uiState.latestSyncedRunId,
+        uiState.homeCards
     ) {
         buildList {
+            // Weather cards first (backend already sorts them by priority).
+            uiState.homeCards.forEach { card ->
+                add(
+                    BannerCardData("weather-${card.id}") {
+                        WeatherBannerView(
+                            title1 = card.title,
+                            title2 = card.subtitle.orEmpty(),
+                            imageRes = weatherCardImage(card.icon),
+                            onTap = { openWeatherCard(context, card) }
+                        )
+                    }
+                )
+            }
+
             if (uiState.hasPlanChanged) {
                 add(
                     BannerCardData("plan-change") {
@@ -438,6 +474,13 @@ private fun nextDisplayedWorkout(
         }
 
     return firstNextWeekWorkout?.let { "Next Workout" to it }
+}
+
+// Alert cards open their provider detail page in a Custom Tab; others are no-ops.
+private fun openWeatherCard(context: Context, card: HomeCard) {
+    if (card.type != "weather_alert") return
+    val url = card.details_url ?: return
+    CustomTabsIntent.Builder().build().launchUrl(context, Uri.parse(url))
 }
 
 @Composable

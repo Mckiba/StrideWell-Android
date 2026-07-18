@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -15,9 +16,11 @@ fun RouteThumbnail(
     coordinates: List<RoutePoint>,
     strokeColor: Color,
     placeholderColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    width: Dp = 32.dp,
+    height: Dp = 34.dp,
 ) {
-    Canvas(modifier = modifier.size(width = 32.dp, height = 34.dp)) {
+    Canvas(modifier = modifier.size(width = width, height = height)) {
         if (coordinates.size < 2) {
             drawRect(
                 color = placeholderColor,

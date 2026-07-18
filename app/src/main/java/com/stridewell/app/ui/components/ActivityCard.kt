@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,6 +30,7 @@ import com.stridewell.app.ui.theme.ActivityTimestampStyle
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.ui.theme.StridewellTheme
+import com.stridewell.app.ui.theme.cardBottomStroke
 import com.stridewell.app.util.DateUtils
 import com.stridewell.app.util.FormatUtils
 import com.stridewell.app.util.UnitSystem
@@ -62,6 +64,7 @@ fun ActivityCard(
                 color = cardColor,
                 shape = RoundedCornerShape(CornerRadius.md)
             )
+            .clip(RoundedCornerShape(CornerRadius.md))
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = Spacing.md, vertical = Spacing.xs),
         horizontalArrangement = Arrangement.spacedBy(Spacing.xl2),
