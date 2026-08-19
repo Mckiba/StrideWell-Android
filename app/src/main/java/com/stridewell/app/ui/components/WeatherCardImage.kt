@@ -14,5 +14,6 @@ fun weatherCardImage(icon: String): Int = when (icon) {
     "thermometer_sun"       -> R.drawable.weather_sun
     "thermometer_snowflake" -> R.drawable.weather_extreme_cold
     "sun_setting"           -> R.drawable.weather_sunset
+    "moon"                  -> R.drawable.weather_after_dark
     else                    -> R.drawable.weather_sun
 }
