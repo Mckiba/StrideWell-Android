@@ -163,20 +163,32 @@ private fun GoalCardPreview() {
         ) {
             GoalCard(
                 summary = GoalSummary(
+                    goal_type = "race",
                     goal_race_date = "2026-10-04",
                     goal_race_distance_m = 21097.5,
+                    goal_race_distance_label = "Half Marathon",
                     plan_start_date = "2026-08-03",
                     horizon_days = 63,
-                    distance_completed_m = 459027.8
+                    weeks_elapsed = 4,
+                    weeks_remaining = 5,
+                    runs_completed = 18,
+                    runs_planned_to_date = 21,
+                    distance_completed_m = 134000.0
                 ),
                 unitSystem = UnitSystem.IMPERIAL
             )
             GoalCard(
                 summary = GoalSummary(
+                    goal_type = "fitness",
                     goal_race_date = null,
                     goal_race_distance_m = null,
+                    goal_race_distance_label = null,
                     plan_start_date = "2026-08-03",
                     horizon_days = 42,
+                    weeks_elapsed = 2,
+                    weeks_remaining = 4,
+                    runs_completed = 10,
+                    runs_planned_to_date = 12,
                     distance_completed_m = 128748.0
                 ),
                 unitSystem = UnitSystem.METRIC
