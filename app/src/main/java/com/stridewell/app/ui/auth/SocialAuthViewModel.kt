@@ -1,14 +1,17 @@
 package com.stridewell.app.ui.auth
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.credentials.CredentialManager
+import androidx.credentials.CredentialOption
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.stridewell.BuildConfig
 import com.stridewell.app.api.ApiResult
@@ -87,37 +90,60 @@ class SocialAuthViewModel @Inject constructor(
         viewModelScope.launch {
             val rawNonce    = generateNonce()
             val hashedNonce = sha256(rawNonce)
-
-            val googleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-                .setNonce(hashedNonce)
-                .build()
-
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build()
+            val credentialManager = CredentialManager.create(context)
 
             try {
-                val credentialManager = CredentialManager.create(context)
-                val result = credentialManager.getCredential(context, request)
-                val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
-                val idToken = credential.idToken
+                val idToken = try {
+                    fetchGoogleIdToken(
+                        credentialManager, context,
+                        GetGoogleIdOption.Builder()
+                            .setFilterByAuthorizedAccounts(false)
+                            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                            .setNonce(hashedNonce)
+                            .build(),
+                    )
+                } catch (e: NoCredentialException) {
+                    // Bottom sheet has nothing to offer (no eligible account, or One Tap
+                    // cooldown after repeated dismissals). Fall back to the full picker,
+                    // which also offers adding an account.
+                    Log.w(TAG, "Google bottom sheet had no credential, falling back to account picker", e)
+                    fetchGoogleIdToken(
+                        credentialManager, context,
+                        GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                            .setNonce(hashedNonce)
+                            .build(),
+                    )
+                }
 
                 // Backend expects the raw nonce; Google embeds the SHA-256 hash in the token
                 finalize(provider = "google") { authRepository.googleSignIn(idToken, rawNonce) }
             } catch (e: GetCredentialCancellationException) {
                 _uiState.update { it.copy(isLoading = false) }
             } catch (e: NoCredentialException) {
+                Log.w(TAG, "Google sign-in: no credential after fallback", e)
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = "No Google account found on this device.")
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "No Google account available. Add one in device settings and try again.",
+                    )
                 }
             } catch (e: GetCredentialException) {
+                Log.e(TAG, "Google sign-in failed: type=${e.type} message=${e.errorMessage}", e)
                 _uiState.update {
                     it.copy(isLoading = false, errorMessage = "Google sign-in failed. Please try again.")
                 }
             }
         }
+    }
+
+    private suspend fun fetchGoogleIdToken(
+        credentialManager: CredentialManager,
+        context: Context,
+        option: CredentialOption,
+    ): String {
+        val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
+        val result = credentialManager.getCredential(context, request)
+        return GoogleIdTokenCredential.createFrom(result.credential.data).idToken
     }
 
     // ── Apple ─────────────────────────────────────────────────────────────────
@@ -195,5 +221,9 @@ class SocialAuthViewModel @Inject constructor(
     private fun sha256(input: String): String {
         val digest = MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8))
         return digest.joinToString("") { "%02x".format(it) }
+    }
+
+    private companion object {
+        private const val TAG = "SocialAuthViewModel"
     }
 }

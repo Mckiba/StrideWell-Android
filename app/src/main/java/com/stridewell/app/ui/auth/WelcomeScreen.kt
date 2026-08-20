@@ -130,7 +130,7 @@ private fun WelcomeContent(
                     color      = Color.White
                 )
                 Text(
-                    text      = "Your AI running coach",
+                    text      = "Your running coach",
                     fontSize  = 20.sp,
                     color     = Color.White.copy(alpha = 0.7f)
                 )
