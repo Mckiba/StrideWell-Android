@@ -24,6 +24,10 @@ keystore.properties
 
 # ---- Firebase / Google Services (contains project credentials) ----
 google-services.json
+google-services-old.json
+
+# ---- Release build output ----
+/app/release/
 
 # ---- Captures / profiling output ----
 /captures
