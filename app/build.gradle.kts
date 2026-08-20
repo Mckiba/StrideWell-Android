@@ -40,10 +40,11 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "API_BASE_URL",        "\"http://10.0.2.2:3000\"")
-            buildConfigField("String", "STRAVA_CLIENT_ID",    "\"204378\"")
+            buildConfigField("String", "STRAVA_CLIENT_ID",    "\"270877\"")
             buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://localhost\"")
-            // Web OAuth client ID from Google Cloud Console (Credentials → Web client)
-            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"72822339247-lvn41ic0uubh3ol1gr55gq923fusm9sj.apps.googleusercontent.com\"")
+            // Web OAuth client (client_type 3 in google-services.json). Credential Manager
+            // requires the web client here, not the iOS client the iOS app signs in with.
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"72822339247-i0ipmfttf7msj38jeknvguedarcjq0tg.apps.googleusercontent.com\"")
             // Apple Service ID registered in Apple Developer Console
             buildConfigField("String", "APPLE_CLIENT_ID",      "\"com.stridewell.service\"")
             // Backend relay receives Apple's form_post then redirects to this deep link
@@ -58,9 +59,9 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("String", "API_BASE_URL",        "\"https://stridewell-api-production.up.railway.app\"")
-            buildConfigField("String", "STRAVA_CLIENT_ID",    "\"204378\"")
+            buildConfigField("String", "STRAVA_CLIENT_ID",    "\"270877\"")
             buildConfigField("String", "STRAVA_REDIRECT_URI", "\"stridewell://localhost\"")
-            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"72822339247-lvn41ic0uubh3ol1gr55gq923fusm9sj.apps.googleusercontent.com\"")
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"72822339247-i0ipmfttf7msj38jeknvguedarcjq0tg.apps.googleusercontent.com\"")
             buildConfigField("String", "APPLE_CLIENT_ID",      "\"com.stridewell.service\"")
             buildConfigField("String", "APPLE_REDIRECT_URI",   "\"stridewell://oauth/apple/callback\"")
             buildConfigField("String", "GOOGLE_MAPS_STATIC_API_KEY", "\"AIzaSyCPkTIFGiek4UUaEKDV-mVDgEBGRnys45s\"")
