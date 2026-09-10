@@ -1,6 +1,7 @@
 package com.stridewell.app.api
 
 import com.stridewell.BuildConfig
+import com.stridewell.app.data.SessionTokens
 import com.stridewell.app.data.TokenStore
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.serialization.json.Json
@@ -15,9 +16,24 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
-/** Attaches the JWT Bearer token to every outgoing request. */
-class AuthInterceptor(private val tokenStore: TokenStore) : Interceptor {
+/**
+ * Attaches the JWT Bearer token to every outgoing request, refreshing it first
+ * when it is close to expiring.
+ *
+ * Refreshing up front means a burst of screen loads after a cold start does not
+ * each spend a wasted 401 round trip discovering the same expiry. A refresh that
+ * fails here is not fatal: the stored token may still be good, and if it is not
+ * the 401 path takes over.
+ */
+class AuthInterceptor(
+    private val tokenStore: SessionTokens,
+    private val refresher: SessionRefresher,
+) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
+        if (tokenStore.getToken() != null && refresher.isAccessTokenNearExpiry()) {
+            refresher.refreshIfNeeded(force = false)
+        }
+
         val token = tokenStore.getToken()
         val request = if (token != null) {
             chain.request().newBuilder()
@@ -54,6 +70,7 @@ class TimezoneInterceptor : Interceptor {
  * are handled by the ViewModel via ApiResult.Error.
  */
 class UnauthorizedInterceptor(
+    private val tokenStore: SessionTokens,
     private val unauthorizedFlow: MutableSharedFlow<Unit>
 ) : Interceptor {
 
@@ -73,7 +90,13 @@ class UnauthorizedInterceptor(
         if (response.code == 401) {
             val path = chain.request().url.encodedPath.trimStart('/')
             val isAuthEndpoint = AUTH_PATHS.any { path.startsWith(it) }
-            if (!isAuthEndpoint) {
+            // While a refresh token is stored, TokenAuthenticator has already seen
+            // this 401 and decided what it means. It clears the session and emits
+            // itself when the token is dead, and deliberately leaves the session
+            // alone when the refresh merely could not be completed — so emitting
+            // here as well would sign the user out on a network blip.
+            val recoverable = !tokenStore.getRefreshToken().isNullOrEmpty()
+            if (!isAuthEndpoint && !recoverable) {
                 unauthorizedFlow.tryEmit(Unit)
             }
         }
@@ -98,14 +121,17 @@ fun buildOkHttpClient(
             HttpLoggingInterceptor.Level.NONE
         }
     }
+    // One refresher shared by the pre-flight interceptor and the 401 authenticator,
+    // so the two paths cannot refresh concurrently.
+    val refresher = SessionRefresher(tokenStore, appJson)
+
     return OkHttpClient.Builder()
-        .addInterceptor(AuthInterceptor(tokenStore))
+        .addInterceptor(AuthInterceptor(tokenStore, refresher))
         .addInterceptor(TimezoneInterceptor())
-        .addInterceptor(UnauthorizedInterceptor(unauthorizedFlow))
+        .addInterceptor(UnauthorizedInterceptor(tokenStore, unauthorizedFlow))
         .addInterceptor(logging)
         // Refreshes the access token on 401 and retries the request transparently.
-        // Only when a refresh attempt fails does the 401 reach UnauthorizedInterceptor.
-        .authenticator(TokenAuthenticator(tokenStore, unauthorizedFlow, appJson))
+        .authenticator(TokenAuthenticator(tokenStore, unauthorizedFlow, refresher))
         .callTimeout(120, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(120, TimeUnit.SECONDS)
