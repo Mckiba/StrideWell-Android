@@ -9,7 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class TokenStore @Inject constructor(@ApplicationContext context: Context) {
+class TokenStore @Inject constructor(@ApplicationContext context: Context) : SessionTokens {
 
     private val prefs: SharedPreferences by lazy {
         val masterKey = MasterKey.Builder(context)
@@ -28,10 +28,10 @@ class TokenStore @Inject constructor(@ApplicationContext context: Context) {
         prefs.edit().putString(KEY_JWT, jwt).apply()
     }
 
-    fun getToken(): String? = prefs.getString(KEY_JWT, null)
+    override fun getToken(): String? = prefs.getString(KEY_JWT, null)
 
     /** Persists the access token, refresh token, and expiry from an auth/refresh response. */
-    fun saveSession(jwt: String, refreshToken: String?, expiresAt: Long?) {
+    override fun saveSession(jwt: String, refreshToken: String?, expiresAt: Long?) {
         prefs.edit().apply {
             putString(KEY_JWT, jwt)
             if (refreshToken != null) putString(KEY_REFRESH, refreshToken)
@@ -40,9 +40,9 @@ class TokenStore @Inject constructor(@ApplicationContext context: Context) {
         }
     }
 
-    fun getRefreshToken(): String? = prefs.getString(KEY_REFRESH, null)
+    override fun getRefreshToken(): String? = prefs.getString(KEY_REFRESH, null)
 
-    fun getExpiresAt(): Long? =
+    override fun getExpiresAt(): Long? =
         if (prefs.contains(KEY_EXPIRES_AT)) prefs.getLong(KEY_EXPIRES_AT, 0L) else null
 
     fun saveUserId(userId: String) {
@@ -51,7 +51,7 @@ class TokenStore @Inject constructor(@ApplicationContext context: Context) {
 
     fun getUserId(): String? = prefs.getString(KEY_USER_ID, null)
 
-    fun clearToken() {
+    override fun clearToken() {
         prefs.edit()
             .remove(KEY_JWT)
             .remove(KEY_REFRESH)

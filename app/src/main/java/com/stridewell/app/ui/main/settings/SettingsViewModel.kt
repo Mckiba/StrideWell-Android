@@ -180,20 +180,30 @@ class SettingsViewModel @Inject constructor(
     // ── Strava ────────────────────────────────────────────────────────────────
 
     private suspend fun loadStravaStatus() {
+        val previous = _uiState.value.stravaState
         _uiState.update { it.copy(stravaState = StravaState.Loading) }
         try {
             val response = stravaApi.stravaStatus()
-            if (response.isSuccessful) {
-                val body = response.body()
-                _uiState.update {
-                    it.copy(stravaState = if (body != null) resolveStravaState(body) else StravaState.Error("Empty response"))
-                }
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                _uiState.update { it.copy(stravaState = resolveStravaState(body)) }
             } else {
-                _uiState.update { it.copy(stravaState = StravaState.Error(response.message())) }
+                _uiState.update { it.copy(stravaState = keepOrError(previous, response.message())) }
             }
         } catch (e: Exception) {
-            _uiState.update { it.copy(stravaState = StravaState.Error(e.message ?: "Unknown error")) }
+            _uiState.update { it.copy(stravaState = keepOrError(previous, e.message ?: "Unknown error")) }
         }
+    }
+
+    /**
+     * Connection state is only ever known from the server, so a failed load says
+     * nothing about whether Strava is connected. Falling back to an error state
+     * told users they had been disconnected and prompted a reconnect they did not
+     * need; keep whatever was last known instead.
+     */
+    private fun keepOrError(previous: StravaState, message: String): StravaState = when (previous) {
+        is StravaState.Connected, is StravaState.Expired, StravaState.Disconnected -> previous
+        else -> StravaState.Error(message)
     }
 
     private fun resolveStravaState(body: StravaStatusResponse): StravaState {
