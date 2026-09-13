@@ -13,7 +13,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import java.io.IOException
 import kotlin.math.PI
-import kotlin.math.floor
 import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -22,11 +21,13 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.Locale
 
 @Singleton
 class RouteRenderer @Inject constructor(
     private val httpClient: OkHttpClient
 ) {
+
     suspend fun render(
         coordinateGroups: List<List<RoutePoint>>,
         region: HeatmapRegion,
@@ -36,13 +37,17 @@ class RouteRenderer @Inject constructor(
     ): Bitmap? {
         if (targetSize.width <= 0 || targetSize.height <= 0) return null
         val requestSize = fitStaticMapSize(targetSize)
-        val continuousZoom = computeZoom(region, requestSize)
-        val fetchZoom = staticMapZoomLevel(continuousZoom)
+        // Mapbox accepts fractional zoom, so the fetched framing matches the requested
+        // region exactly. The old integer-zoom + centre-crop-upscale dance is gone.
+        val zoom = computeZoom(region, requestSize)
         val mapFetch = withContext(Dispatchers.IO) {
-            fetchStaticMapBitmap(region, requestSize, fetchZoom, isDark, staticMapsApiKey)
+            fetchStaticMapBitmap(region, requestSize, zoom, isDark, staticMapsApiKey)
         }
         val base = mapFetch.bitmap
-            ?: fallbackBasemap(requestSize, isDark)
+            ?: fallbackBasemap(
+                IntSize(requestSize.width * PIXEL_SCALE, requestSize.height * PIXEL_SCALE),
+                isDark
+            )
 
         if (mapFetch.bitmap == null) {
             val reason = mapFetch.failure
@@ -55,7 +60,7 @@ class RouteRenderer @Inject constructor(
             Log.i(
                 TAG,
                 "Static map fetch succeeded; theme=${if (isDark) "dark" else "light"} " +
-                    "styleApplied=$isDark zoom=$fetchZoom"
+                    "zoom=$zoom size=${base.width}x${base.height}"
             )
         }
 
@@ -64,24 +69,26 @@ class RouteRenderer @Inject constructor(
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             // iOS parity: #289FFF @ 0.75 alpha, width 2.5
             color = 0xBF289FFF.toInt()
-            strokeWidth = 2.5f
+            strokeWidth = 2.5f * PIXEL_SCALE
             style = Paint.Style.STROKE
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
         }
 
-        val centerWorld = latLngToWorld(region.centerLat, region.centerLng, fetchZoom.toDouble())
-        val halfW = requestSize.width / 2.0
-        val halfH = requestSize.height / 2.0
+        // Project in the fetched bitmap's own pixel space: world coordinates are in
+        // logical units, so scale the offsets by the @2x factor.
+        val centerWorld = latLngToWorld(region.centerLat, region.centerLng, zoom)
+        val halfW = mutable.width / 2.0
+        val halfH = mutable.height / 2.0
 
         for (coords in coordinateGroups) {
             if (coords.size < 2) continue
             var prevX: Float? = null
             var prevY: Float? = null
             for (point in coords) {
-                val world = latLngToWorld(point.latitude, point.longitude, fetchZoom.toDouble())
-                val x = (world.first - centerWorld.first + halfW).toFloat()
-                val y = (world.second - centerWorld.second + halfH).toFloat()
+                val world = latLngToWorld(point.latitude, point.longitude, zoom)
+                val x = ((world.first - centerWorld.first) * PIXEL_SCALE + halfW).toFloat()
+                val y = ((world.second - centerWorld.second) * PIXEL_SCALE + halfH).toFloat()
                 val px = prevX
                 val py = prevY
                 if (px != null && py != null) {
@@ -92,22 +99,8 @@ class RouteRenderer @Inject constructor(
             }
         }
 
-        // iOS uses continuous map zoom; Static Maps only accepts integer zoom levels.
-        // Apply center-crop upscaling to emulate the missing fractional zoom component.
-        val fractionalScale = 2.0.pow(continuousZoom - fetchZoom.toDouble()).toFloat()
-        val zoomAligned = if (fractionalScale > 1.001f) {
-            applyCenterZoom(mutable, fractionalScale)
-        } else {
-            mutable
-        }
-
-        if (requestSize == targetSize) return zoomAligned
-        return Bitmap.createScaledBitmap(
-            zoomAligned,
-            targetSize.width,
-            targetSize.height,
-            true
-        )
+        if (mutable.width == targetSize.width && mutable.height == targetSize.height) return mutable
+        return Bitmap.createScaledBitmap(mutable, targetSize.width, targetSize.height, true)
     }
 
     private fun fallbackBasemap(size: IntSize, isDark: Boolean): Bitmap {
@@ -118,7 +111,7 @@ class RouteRenderer @Inject constructor(
     }
 
     private fun fitStaticMapSize(targetSize: IntSize): IntSize {
-        val maxDimension = 640f
+        val maxDimension = MAX_STATIC_DIMENSION.toFloat()
         val scale = minOf(
             maxDimension / targetSize.width.toFloat(),
             maxDimension / targetSize.height.toFloat(),
@@ -145,24 +138,7 @@ class RouteRenderer @Inject constructor(
         return minOf(zoomLon, zoomLat).coerceIn(2.0, 20.0)
     }
 
-    private fun staticMapZoomLevel(continuousZoom: Double): Int {
-        return floor(continuousZoom).toInt().coerceIn(2, 20)
-    }
 
-    private fun applyCenterZoom(source: Bitmap, scale: Float): Bitmap {
-        if (scale <= 1f) return source
-        val cropWidth = (source.width / scale).roundToInt().coerceIn(1, source.width)
-        val cropHeight = (source.height / scale).roundToInt().coerceIn(1, source.height)
-        val left = ((source.width - cropWidth) / 2f).roundToInt().coerceIn(0, source.width - cropWidth)
-        val top = ((source.height - cropHeight) / 2f).roundToInt().coerceIn(0, source.height - cropHeight)
-
-        val result = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(result)
-        val src = Rect(left, top, left + cropWidth, top + cropHeight)
-        val dst = Rect(0, 0, source.width, source.height)
-        canvas.drawBitmap(source, src, dst, null)
-        return result
-    }
 
     private fun mercatorY(lat: Double): Double {
         val rad = lat * PI / 180.0
@@ -183,7 +159,7 @@ class RouteRenderer @Inject constructor(
     private fun fetchStaticMapBitmap(
         region: HeatmapRegion,
         size: IntSize,
-        zoom: Int,
+        zoom: Double,
         isDark: Boolean,
         key: String
     ): MapFetchResult {
@@ -192,32 +168,26 @@ class RouteRenderer @Inject constructor(
                 bitmap = null,
                 failure = MapFailure(
                     code = "missing_api_key",
-                    detail = "BuildConfig.GOOGLE_MAPS_STATIC_API_KEY is blank"
+                    detail = "BuildConfig.MAPBOX_PUBLIC_TOKEN is blank"
                 )
             )
         }
 
-        val base = "https://maps.googleapis.com/maps/api/staticmap".toHttpUrl().newBuilder()
-            .addQueryParameter("center", "${region.centerLat},${region.centerLng}")
-            .addQueryParameter("zoom", zoom.toString())
-            .addQueryParameter("size", "${size.width}x${size.height}")
-            .addQueryParameter("scale", "2")
-            .addQueryParameter("maptype", "roadmap")
-
-        if (isDark) {
-            // Force dark tiles for app dark mode, matching iOS trait-based map appearance.
-            base.addQueryParameter("style", "feature:all|element:geometry|color:0x242f3e")
-            base.addQueryParameter("style", "feature:all|element:labels.text.fill|color:0x746855")
-            base.addQueryParameter("style", "feature:all|element:labels.text.stroke|color:0x242f3e")
-            base.addQueryParameter("style", "feature:road|element:geometry|color:0x38414e")
-            base.addQueryParameter("style", "feature:road.highway|element:geometry|color:0x746855")
-            base.addQueryParameter("style", "feature:water|element:geometry|color:0x17263c")
-        }
-
-        base.addQueryParameter("key", key)
+        // Mapbox Static Images: 1280 per dimension (Google capped at 640), @2x for
+        // double the pixels, fractional zoom, and first-class light/dark styles in
+        // place of the hand-rolled Google colour overrides.
+        val style = if (isDark) STYLE_DARK else STYLE_LIGHT
+        val centre = "%.6f,%.6f,%.4f".format(
+            Locale.US, region.centerLng, region.centerLat, zoom
+        )
+        val url = ("https://api.mapbox.com/styles/v1/$style/static/" +
+            "$centre/${size.width}x${size.height}@${PIXEL_SCALE}x")
+            .toHttpUrl().newBuilder()
+            .addQueryParameter("access_token", key)
+            .build()
 
         val request = Request.Builder()
-            .url(base.build())
+            .url(url)
             .get()
             .build()
 
@@ -254,11 +224,10 @@ class RouteRenderer @Inject constructor(
                         failure = MapFailure("decode_failed", "Could not decode static map image bytes")
                     )
                 }
-                // Static Maps returns @2x when scale=2. Draw against logical request size.
-                MapFetchResult(
-                    bitmap = Bitmap.createScaledBitmap(bitmap, size.width, size.height, true),
-                    failure = null
-                )
+                // Keep the @2x pixels. The previous implementation downscaled back to
+                // the logical size here purely so the route maths lined up, throwing
+                // away half the resolution before the final upscale to the screen.
+                MapFetchResult(bitmap = bitmap, failure = null)
             }
         } catch (io: IOException) {
             MapFetchResult(
@@ -278,5 +247,19 @@ class RouteRenderer @Inject constructor(
 
     companion object {
         private const val TAG = "HeatmapRenderer"
+
+        /** Mapbox Static Images allows 1280 per dimension; Google Static Maps capped at 640. */
+        private const val MAX_STATIC_DIMENSION = 1280
+
+        /** Mapbox @2x. Doubles the fetched pixels for the same map area. */
+        private const val PIXEL_SCALE = 2
+
+        /**
+         * Custom Mapbox styles, as "owner/styleId" — the Static Images path segment
+         * after /styles/v1/. Edit these in Mapbox Studio; no app change is needed for
+         * a restyle, but bump CACHE_VERSION or cached images keep being served.
+         */
+        private const val STYLE_LIGHT = "mckiba/cmtzcmfdx009301snb8xf5g0e"
+        private const val STYLE_DARK = "mckiba/cmtzcs3dr00a801ssb31m95no"
     }
 }

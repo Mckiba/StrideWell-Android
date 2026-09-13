@@ -14,7 +14,7 @@ data class HeatmapRegion(
 
 object RegionCalculator {
     // Smaller span => more zoomed in; larger span => more zoomed out.
-    private const val LOCATION_SPAN = 0.01
+    private const val LOCATION_SPAN = 0.03
     private const val PADDING_FACTOR = 1.15
     private const val MIN_SPAN = 0.01
     private const val OUTLIER_THRESHOLD_DEG = 0.45

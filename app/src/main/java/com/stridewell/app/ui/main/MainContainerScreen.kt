@@ -172,6 +172,8 @@ fun MainContainerScreen(
                     modifier = Modifier
                 )
                 MainTab.Chat -> ChatScreen(
+                    hasLocationPermission = hasLocationPermission,
+                    heatmapViewModel = heatmapViewModel,
                     viewModel = chatViewModel,
                     modifier = Modifier
                 )
@@ -184,6 +186,9 @@ fun MainContainerScreen(
                 )
                 MainTab.Settings -> SettingsScreen(
                     onOpenFitnessProfile = onOpenFitnessProfile,
+                    hasLocationPermission = hasLocationPermission,
+                    heatmapViewModel = heatmapViewModel,
+                    weatherViewModel = weatherViewModel,
                     modifier = Modifier
                 )
             }
