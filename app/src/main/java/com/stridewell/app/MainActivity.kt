@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stridewell.app.data.ActivityRepository
 import com.stridewell.app.data.PlanRepository
+import com.stridewell.app.data.SessionTeardown
 import com.stridewell.app.data.SettingsRepository
 import com.stridewell.app.navigation.StridewellNavHost
 import com.stridewell.app.ui.auth.LaunchViewModel
@@ -53,6 +54,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var planRepository: PlanRepository
 
+    @Inject
+    lateinit var sessionTeardown: SessionTeardown
+
     /** Receives the deep_link extra from a notification tap. */
     @Inject
     @Named("notificationDeepLink")
@@ -72,6 +76,13 @@ class MainActivity : ComponentActivity() {
         // Hold splash until the launch auth check resolves
         splashScreen.setKeepOnScreenCondition {
             launchViewModel.state.value == LaunchViewModel.LaunchState.Loading
+        }
+
+        // A 401 that survived refresh ends the session. StridewellNavHost handles
+        // the navigation; the caches have to be cleared here too, or the next
+        // account on this device inherits the previous user's data.
+        lifecycleScope.launch {
+            unauthorizedFlow.collect { sessionTeardown.clear() }
         }
 
         // Handle deep link if app was cold-started via the OAuth callback or notification tap

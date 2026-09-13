@@ -71,6 +71,10 @@ class PlanRepository @Inject constructor(
     private val _weekCache = MutableStateFlow<Map<String, PlanWeekResponse>>(emptyMap())
     val weekCache: StateFlow<Map<String, PlanWeekResponse>> = _weekCache.asStateFlow()
 
+    /** plan_version_id every entry in [_weekCache] belongs to. A fetched week
+     *  reporting a different version drops the whole cache as stale. */
+    private var weekCacheVersionId: String? = null
+
     val planUpdated: StateFlow<Boolean> = combine(
         _currentPlanVersionId,
         _lastSeenPlanVersionId
@@ -144,12 +148,7 @@ class PlanRepository @Inject constructor(
 
     suspend fun setWeekData(week: PlanWeekResponse) {
         _currentWeek.value = week
-        _currentPlanVersionId.value = week.plan_version_id
-        _weekCache.value = _weekCache.value + (week.start_date to week)
-
-        if (_lastSeenPlanVersionId.value == null) {
-            markPlanChangeSeen()
-        }
+        cacheWeek(week)
     }
 
     suspend fun setGoalSummary(summary: GoalSummary?) {
@@ -157,6 +156,12 @@ class PlanRepository @Inject constructor(
     }
 
     suspend fun cacheWeek(week: PlanWeekResponse) {
+        // A new plan version makes every other cached week stale.
+        if (weekCacheVersionId != null && weekCacheVersionId != week.plan_version_id) {
+            _weekCache.value = emptyMap()
+        }
+        weekCacheVersionId = week.plan_version_id
+
         _weekCache.value = _weekCache.value + (week.start_date to week)
         _currentPlanVersionId.value = week.plan_version_id
         if (_lastSeenPlanVersionId.value == null) {
@@ -189,6 +194,7 @@ class PlanRepository @Inject constructor(
         _currentWeek.value = null
         _goalSummary.value = null
         _weekCache.value = emptyMap()
+        weekCacheVersionId = null
 
         if (clearSeenVersion) {
             _lastSeenPlanVersionId.value = null

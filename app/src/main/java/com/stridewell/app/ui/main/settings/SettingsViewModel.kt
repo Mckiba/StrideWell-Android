@@ -5,18 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.app.api.ApiResult
 import com.stridewell.app.api.StravaApi
-import com.stridewell.app.data.ActivityRepository
 import com.stridewell.app.data.AuthRepository
-import com.stridewell.app.data.ChatRepository
 import com.stridewell.app.data.HomeCardsRepository
 import com.stridewell.app.data.OnboardingRepository
 import com.stridewell.app.data.PlanRepository
-import com.stridewell.app.data.RunsRepository
+import com.stridewell.app.data.SessionTeardown
 import com.stridewell.app.data.SettingsRepository
-import com.stridewell.app.data.TokenStore
 import com.stridewell.app.model.StravaStatusResponse
 import com.stridewell.app.model.goalName
-import com.stridewell.app.ui.background.heatmap.HeatmapCache
 import com.stridewell.app.util.AppTheme
 import com.stridewell.app.util.DateUtils
 import com.stridewell.app.util.StravaOAuthHelper
@@ -25,8 +21,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Named
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,13 +35,9 @@ class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val onboardingRepository: OnboardingRepository,
     private val planRepository: PlanRepository,
-    private val chatRepository: ChatRepository,
-    private val runsRepository: RunsRepository,
-    private val activityRepository: ActivityRepository,
     private val homeCardsRepository: HomeCardsRepository,
-    private val tokenStore: TokenStore,
-    private val heatmapCache: HeatmapCache,
     private val stravaApi: StravaApi,
+    private val sessionTeardown: SessionTeardown,
     private val unauthorizedFlow: MutableSharedFlow<Unit>,
     @Named("oauthCode") private val oauthCodeFlow: MutableStateFlow<String?>
 ) : ViewModel() {
@@ -349,16 +339,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onSignOut() {
         viewModelScope.launch {
-            tokenStore.getUserId()?.let { heatmapCache.clearAll(it) }
-            tokenStore.clearToken()
-            listOf(
-                async { settingsRepository.reset() },
-                async { onboardingRepository.reset() },
-                async { planRepository.reset() },
-                async { chatRepository.reset() },
-                async { runsRepository.reset() },
-                async { activityRepository.reset() }
-            ).awaitAll()
+            sessionTeardown.clear()
             unauthorizedFlow.tryEmit(Unit)
         }
     }
@@ -379,16 +360,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = authRepository.deleteAccount()) {
                 is ApiResult.Success -> {
-                    tokenStore.getUserId()?.let { heatmapCache.clearAll(it) }
-                    tokenStore.clearToken()
-                    listOf(
-                        async { settingsRepository.reset() },
-                        async { onboardingRepository.reset() },
-                        async { planRepository.reset() },
-                        async { chatRepository.reset() },
-                        async { runsRepository.reset() },
-                        async { activityRepository.reset() }
-                    ).awaitAll()
+                    sessionTeardown.clear()
                     unauthorizedFlow.tryEmit(Unit)
                 }
                 is ApiResult.Error -> {

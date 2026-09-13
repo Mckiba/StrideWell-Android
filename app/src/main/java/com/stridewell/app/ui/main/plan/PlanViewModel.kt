@@ -50,6 +50,10 @@ class PlanViewModel @Inject constructor(
         val isOffline: Boolean = false
     )
 
+    /** Week keys with a prefetch in flight. Confined to viewModelScope's main
+     *  dispatcher, so a plain set is safe. */
+    private val inFlightPrefetches = mutableSetOf<String>()
+
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
@@ -111,6 +115,11 @@ class PlanViewModel @Inject constructor(
         _uiState.update { it.copy(selectedDay = null) }
     }
 
+    /**
+     * Paints the cached week immediately so navigation stays instant, then always
+     * revalidates against /plan/week. Without the revalidation a week prefetched
+     * earlier renders for the rest of the session with stale day statuses.
+     */
     private fun loadWeek(
         monday: Date,
         forceRefresh: Boolean = false,
@@ -118,36 +127,40 @@ class PlanViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             val startDate = DateUtils.format(monday)
+            val cached = planRepository.cachedWeek(startDate)
+
             _uiState.update {
-                it.copy(
-                    selectedMonday = monday,
-                    screenState = if (it.displayedWeek == null) ScreenState.Loading else it.screenState,
-                    isRefreshing = pullToRefresh
-                )
+                when {
+                    cached != null && !forceRefresh -> it.copy(
+                        selectedMonday = monday,
+                        displayedWeek = cached,
+                        screenState = if (cached.days.isEmpty()) ScreenState.Empty else ScreenState.Loaded,
+                        isRefreshing = pullToRefresh
+                    )
+                    // Nothing cached: clear rather than leave the previous week's
+                    // days rendering under the new date range.
+                    cached == null -> it.copy(
+                        selectedMonday = monday,
+                        displayedWeek = null,
+                        weekRuns = emptyList(),
+                        screenState = ScreenState.Loading,
+                        isRefreshing = pullToRefresh
+                    )
+                    else -> it.copy(selectedMonday = monday, isRefreshing = pullToRefresh)
+                }
             }
 
             val runsDeferred = async { runsRepository.runsForWeek(monday) }
             try {
-                if (!forceRefresh) {
-                    planRepository.cachedWeek(startDate)?.let { cached ->
-                        val weekRuns = (runsDeferred.await() as? ApiResult.Success)?.data?.runs.orEmpty()
-                        _uiState.update {
-                            it.copy(
-                                displayedWeek = cached,
-                                weekRuns = weekRuns,
-                                screenState = if (cached.days.isEmpty()) ScreenState.Empty else ScreenState.Loaded
-                            )
-                        }
-                        prefetchAdjacentWeeks(monday)
-                        return@launch
-                    }
-                }
+                val result = planRepository.week(startDate)
+                val weekRuns = (runsDeferred.await() as? ApiResult.Success)?.data?.runs.orEmpty()
 
-                when (val result = planRepository.week(startDate)) {
+                // The user may have navigated on while this was in flight.
+                if (!isDisplaying(startDate)) return@launch
+
+                when (result) {
                     is ApiResult.Success -> {
                         planRepository.setWeekData(result.data)
-                        planRepository.cacheWeek(result.data)
-                        val weekRuns = (runsDeferred.await() as? ApiResult.Success)?.data?.runs.orEmpty()
                         _uiState.update {
                             it.copy(
                                 displayedWeek = result.data,
@@ -158,6 +171,9 @@ class PlanViewModel @Inject constructor(
                         prefetchAdjacentWeeks(monday)
                     }
                     is ApiResult.Error -> {
+                        // A failed revalidation must not blank a week already on screen.
+                        if (_uiState.value.displayedWeek != null) return@launch
+
                         if (result.status == 404) {
                             _uiState.update {
                                 it.copy(displayedWeek = null, weekRuns = emptyList(), screenState = ScreenState.Empty)
@@ -175,6 +191,10 @@ class PlanViewModel @Inject constructor(
         }
     }
 
+    /** True while [startDate] is still the week on screen. */
+    private fun isDisplaying(startDate: String): Boolean =
+        DateUtils.format(_uiState.value.selectedMonday) == startDate
+
     private suspend fun prefetchAdjacentWeeks(monday: Date) {
         val prev = DateUtils.format(DateUtils.previousMonday(monday))
         val next = DateUtils.format(DateUtils.nextMonday(monday))
@@ -186,9 +206,14 @@ class PlanViewModel @Inject constructor(
 
     private suspend fun prefetchIfNeeded(startDate: String) {
         if (planRepository.cachedWeek(startDate) != null) return
-        when (val result = planRepository.week(startDate)) {
-            is ApiResult.Success -> planRepository.cacheWeek(result.data)
-            is ApiResult.Error -> Unit
+        if (!inFlightPrefetches.add(startDate)) return
+        try {
+            when (val result = planRepository.week(startDate)) {
+                is ApiResult.Success -> planRepository.cacheWeek(result.data)
+                is ApiResult.Error -> Unit
+            }
+        } finally {
+            inFlightPrefetches.remove(startDate)
         }
     }
 }
