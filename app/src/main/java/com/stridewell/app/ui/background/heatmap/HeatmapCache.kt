@@ -45,6 +45,15 @@ class HeatmapCache @Inject constructor(
         }
     }
 
+    /**
+     * Wipes every cached heatmap regardless of owner. Used on sign-out, where
+     * TokenAuthenticator has already dropped the user id, so a per-user clear
+     * is not possible. Also sweeps files orphaned by earlier sign-outs.
+     */
+    fun clearAll() {
+        cacheDirectory.listFiles()?.forEach { it.delete() }
+    }
+
     private fun cacheKey(userId: String, runCount: Int, hasLocation: Boolean, isDark: Boolean): String {
         val locSuffix = if (hasLocation) "_loc" else "_noloc"
         val darkSuffix = if (isDark) "_dark" else "_light"
