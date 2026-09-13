@@ -3,6 +3,7 @@ package com.stridewell.app.ui.main.settings
 import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -42,6 +43,12 @@ import com.stridewell.BuildConfig
 import com.stridewell.app.data.HomeCardsRepository
 import com.stridewell.app.ui.main.rememberNavBarBottomInset
 import com.stridewell.app.ui.theme.CornerRadius
+import com.stridewell.app.model.StormCondition
+import androidx.compose.ui.graphics.luminance
+import com.stridewell.app.ui.background.heatmap.HeatmapBackgroundView
+import com.stridewell.app.ui.background.heatmap.HeatmapViewModel
+import com.stridewell.app.ui.background.weather.StormOverlayView
+import com.stridewell.app.ui.background.weather.WeatherViewModel
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.util.AppTheme
 import com.stridewell.app.util.UnitSystem
@@ -50,10 +57,14 @@ import java.util.Locale
 @Composable
 fun SettingsScreen(
     onOpenFitnessProfile: () -> Unit = {},
+    hasLocationPermission: Boolean = false,
+    heatmapViewModel: HeatmapViewModel = hiltViewModel(),
+    weatherViewModel: WeatherViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val weatherState by weatherViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     // Dialogs rendered outside the scroll container
@@ -61,28 +72,49 @@ fun SettingsScreen(
     DeleteDialog(uiState, viewModel)
     DeleteConfirmDialog(uiState, viewModel)
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-        contentPadding = PaddingValues(
-            start = Spacing.md,
-            end = Spacing.md,
-            top = Spacing.md,
-            bottom = Spacing.md + rememberNavBarBottomInset()
+    val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    Box(modifier = modifier.fillMaxSize()) {
+        HeatmapBackgroundView(
+            hasLocationPermission = hasLocationPermission,
+            isDarkTheme = isDarkTheme,
+            heatmapViewModel = heatmapViewModel
         )
-    ) {
-        item {
-            ConnectedAccountsSection(
-                uiState        = uiState,
-                onConnectClick = { viewModel.onConnectClicked(context) },
-                viewModel      = viewModel
+        StormOverlayView(
+            condition = weatherState.activeCondition,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+            contentPadding = PaddingValues(
+                start = Spacing.md,
+                end = Spacing.md,
+                top = Spacing.md,
+                bottom = Spacing.md + rememberNavBarBottomInset()
             )
-        }
+        ) {
+            item {
+                ConnectedAccountsSection(
+                    uiState        = uiState,
+                    onConnectClick = { viewModel.onConnectClicked(context) },
+                    viewModel      = viewModel
+                )
+            }
         item { TrainingPreferencesSection(uiState, viewModel, onOpenFitnessProfile) }
         item { CoachingNotificationsSection(uiState, viewModel) }
         item { AccountSection(uiState, viewModel) }
         if (BuildConfig.DEBUG) {
-            item { DeveloperSection(uiState, viewModel) }
+            item {
+                DeveloperSection(
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    debugCondition = weatherState.debugCondition,
+                    onDebugConditionChanged = weatherViewModel::setDebugCondition
+                )
+            }
+        }
         }
     }
 }
@@ -92,7 +124,9 @@ fun SettingsScreen(
 @Composable
 private fun DeveloperSection(
     uiState: SettingsViewModel.UiState,
-    viewModel: SettingsViewModel
+    viewModel: SettingsViewModel,
+    debugCondition: StormCondition?,
+    onDebugConditionChanged: (StormCondition?) -> Unit
 ) {
     SettingsCard(title = "Developer") {
         Column(modifier = Modifier.fillMaxWidth().padding(Spacing.md)) {
@@ -111,6 +145,27 @@ private fun DeveloperSection(
                         onClick  = { viewModel.onDebugWeatherLocationChanged(loc) },
                         shape    = SegmentedButtonDefaults.itemShape(index, entries.size),
                         label    = { Text(loc.label) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.size(Spacing.md))
+
+            Text("Weather Preview", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text  = "Force rain or snow effect on the dashboard",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.size(Spacing.sm))
+            val conditions = listOf(null, StormCondition.RAIN, StormCondition.SNOW)
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                conditions.forEachIndexed { index, condition ->
+                    SegmentedButton(
+                        selected = debugCondition == condition,
+                        onClick  = { onDebugConditionChanged(condition) },
+                        shape    = SegmentedButtonDefaults.itemShape(index, conditions.size),
+                        label    = { Text(condition?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Off") }
                     )
                 }
             }

@@ -70,6 +70,7 @@ import com.stridewell.app.ui.theme.SofiaSansFamily
 import com.stridewell.app.ui.theme.Spacing
 import com.stridewell.app.util.DateUtils
 import com.stridewell.app.util.FormatUtils
+import com.stridewell.BuildConfig
 
 private data class BannerCardData(
     val id: String,
@@ -146,7 +147,10 @@ fun HomeScreen(
             }
         }
 
-        FloatingActionButton(
+        // DEBUG: strips the dashboard back to the bare heatmap. Sat at a fixed
+        // 24dp bottom padding, which put it underneath the floating GlassNavBar
+        // and out of reach — offset by the nav bar inset like every other tab.
+        if (BuildConfig.DEBUG) FloatingActionButton(
             onClick = {
                 if (!uiState.showHeatmapOnly) {
                     selectedWorkout = null
@@ -156,7 +160,7 @@ fun HomeScreen(
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 24.dp),
+                .padding(end = 16.dp, bottom = rememberNavBarBottomInset() + 12.dp),
             containerColor = Color.Black.copy(alpha = 0.45f),
             contentColor = Color.White
         ) {

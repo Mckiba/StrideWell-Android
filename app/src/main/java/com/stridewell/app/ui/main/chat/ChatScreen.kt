@@ -51,6 +51,9 @@ import com.stridewell.app.ui.components.TypingIndicator
 import com.stridewell.app.ui.theme.CornerRadius
 import com.stridewell.app.ui.theme.Spacing
 import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.ui.graphics.luminance
+import com.stridewell.app.ui.background.heatmap.HeatmapBackgroundView
+import com.stridewell.app.ui.background.heatmap.HeatmapViewModel
 
 private val SuggestedPrompts = listOf(
     "Why did my plan change?",
@@ -60,6 +63,8 @@ private val SuggestedPrompts = listOf(
 
 @Composable
 fun ChatScreen(
+    hasLocationPermission: Boolean = false,
+    heatmapViewModel: HeatmapViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
@@ -100,10 +105,18 @@ fun ChatScreen(
             }
     }
 
+    val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    Box(modifier = modifier.fillMaxSize()) {
+    HeatmapBackgroundView(
+        hasLocationPermission = hasLocationPermission,
+        isDarkTheme = isDarkTheme,
+        heatmapViewModel = heatmapViewModel
+    )
+
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
             .imePadding()
     ) {
         when {
@@ -167,6 +180,7 @@ fun ChatScreen(
             onSend = viewModel::sendFromInput,
             canSend = uiState.canSend
         )
+    }
     }
 }
 

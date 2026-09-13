@@ -18,29 +18,44 @@ import androidx.compose.ui.res.imageResource
 import com.stridewell.R
 import com.stridewell.app.model.StormCondition
 import kotlin.math.PI
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 @Composable
 fun StormOverlayView(
     condition: StormCondition,
     modifier: Modifier = Modifier
 ) {
-    when (condition) {
-        StormCondition.CLEAR -> Unit
-        StormCondition.RAIN -> {
-            StormView(
+    if (condition == StormCondition.CLEAR) return
+
+    val isLight = MaterialTheme.colorScheme.background.luminance() >= 0.5f
+
+    Box(modifier = modifier) {
+        // Thin darkening layer so the light-coloured storm particles stay legible
+        // in Light mode, where they otherwise vanish against the background.
+        // Subtle in Dark mode. Mirrors the iOS StormOverlayView dimmer.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = if (isLight) 0.22f else 0.08f))
+        )
+        when (condition) {
+            StormCondition.RAIN -> StormView(
                 type = StormContents.RAIN,
                 directionDegrees = 20f,
                 strength = 250,
-                modifier = modifier
+                modifier = Modifier.fillMaxSize()
             )
-        }
-        StormCondition.SNOW -> {
-            StormView(
+            StormCondition.SNOW -> StormView(
                 type = StormContents.SNOW,
                 directionDegrees = 0f,
                 strength = 150,
-                modifier = modifier
+                modifier = Modifier.fillMaxSize()
             )
+            StormCondition.CLEAR -> Unit
         }
     }
 }

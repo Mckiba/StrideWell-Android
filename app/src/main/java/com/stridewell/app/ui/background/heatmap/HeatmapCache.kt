@@ -8,6 +8,7 @@ import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
+import java.util.concurrent.TimeUnit
 
 @Singleton
 class HeatmapCache @Inject constructor(
@@ -21,6 +22,17 @@ class HeatmapCache @Inject constructor(
         val key = cacheKey(userId, runCount, hasLocation, isDark)
         val file = File(cacheDirectory, "$key.jpg")
         if (!file.exists()) return null
+
+        // The cache key only covers inputs the app knows about (user, run count,
+        // location, theme). The Mapbox style is fetched by id, so republishing it in
+        // Studio changes the rendered map without changing the key. Expire on age so
+        // a restyle reaches devices on its own instead of needing a CACHE_VERSION bump.
+        val age = System.currentTimeMillis() - file.lastModified()
+        if (age > TTL_MILLIS || age < 0) {
+            file.delete()
+            return null
+        }
+
         return BitmapFactory.decodeFile(file.absolutePath)
     }
 
@@ -61,6 +73,13 @@ class HeatmapCache @Inject constructor(
     }
 
     companion object {
-        private const val CACHE_VERSION = 3
+        private const val CACHE_VERSION = 7
+
+        /**
+         * How long a rendered heatmap stays valid. Bounds how stale a Mapbox restyle
+         * can be on a device; still bump [CACHE_VERSION] for changes to the renderer
+         * itself, which must invalidate immediately rather than within a day.
+         */
+        private val TTL_MILLIS = TimeUnit.DAYS.toMillis(1)
     }
 }

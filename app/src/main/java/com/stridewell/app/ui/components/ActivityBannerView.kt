@@ -5,11 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -61,9 +63,12 @@ fun ActivityBannerView(
     Box(modifier = modifier) {
         Row(
             modifier = Modifier
-                .width(300.dp)
+                // A minimum, not a fixed width: width() pinned min==max, which made
+                // the following fillMaxWidth() a no-op and left the card inset on
+                // Home. The carousel still sizes its pages via PageSize.Fixed.
+                .defaultMinSize(minWidth = 300.dp)
                 .fillMaxWidth()
-                .height(99.dp)
+                .heightIn(min = 99.dp)
                 .shadow(
                     elevation = 8.dp,
                     shape = RoundedCornerShape(CornerRadius.sm),

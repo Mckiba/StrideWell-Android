@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stridewell.BuildConfig
 import com.stridewell.app.api.ApiResult
+import com.stridewell.app.data.GeoCoordinate
 import com.stridewell.app.data.LocationRepository
 import com.stridewell.app.data.RunsRepository
 import com.stridewell.app.data.TokenStore
@@ -44,6 +45,20 @@ class HeatmapViewModel @Inject constructor(
     private var locationPermissionGranted = false
     private var lastThemeIsDark: Boolean? = null
     private var generationJob: Job? = null
+
+    /** True when the render on screen was centred on the user rather than the
+     *  bounding box of every run. Lets the view regenerate once, when a fix
+     *  finally arrives, instead of re-rendering on every coordinate update. */
+    private var lastRenderHadLocation = false
+
+    /** Emits once a coordinate is known. The view waits briefly on this before
+     *  the first render so a slow GPS fix does not produce a city-wide image. */
+    val coordinate: StateFlow<GeoCoordinate?> = locationRepository.coordinate
+
+    /** True when a location has arrived since the current render was produced,
+     *  i.e. the heatmap is framed on all runs but could now be centred. */
+    fun needsLocationRegeneration(): Boolean =
+        !lastRenderHadLocation && locationRepository.coordinate.value != null
 
     fun setRenderSize(size: IntSize) {
         if (size.width > 0 && size.height > 0) {
@@ -104,6 +119,7 @@ class HeatmapViewModel @Inject constructor(
                     }
 
                     val hasLocation = location != null
+                    lastRenderHadLocation = hasLocation
                     val cached = heatmapCache.load(
                         userId = userId,
                         runCount = data.run_count,
@@ -153,7 +169,7 @@ class HeatmapViewModel @Inject constructor(
                         region = region,
                         targetSize = targetSize,
                         isDark = isDark,
-                        staticMapsApiKey = BuildConfig.GOOGLE_MAPS_STATIC_API_KEY
+                        staticMapsApiKey = BuildConfig.MAPBOX_PUBLIC_TOKEN
                     )
 
                     if (image == null) {

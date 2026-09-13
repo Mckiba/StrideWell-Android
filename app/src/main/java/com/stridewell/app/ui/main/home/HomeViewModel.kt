@@ -96,14 +96,13 @@ class HomeViewModel @Inject constructor(
                 baseInputs,
                 settingsRepository.homeHeatmapOnly,
                 activityRepository.showActivityBanner,
-                activityRepository.lastSyncedRunId
-            ) { base, showHeatmapOnly, showActivityBanner, syncedRunId ->
+                activityRepository.lastSyncedRunId,
+                planRepository.weekCache
+            ) { base, showHeatmapOnly, showActivityBanner, syncedRunId, weekCache ->
                 val week = base.week
-                val nextWeekStart = week?.start_date
-                    ?.let(DateUtils::parse)
-                    ?.let(DateUtils::nextMonday)
-                    ?.let(DateUtils::format)
-                val nextWeek = nextWeekStart?.let { planRepository.cachedWeek(it) }
+                // Derived from today, not from currentWeek — currentWeek is null on the
+                // first emission, which used to skip the next-week fallback entirely.
+                val nextWeek = weekCache[nextWeekStart()]
                 UiState(
                     screenState = _uiState.value.screenState,
                     unitSystem = base.unitSystem,
@@ -169,11 +168,18 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /** Monday of next week, derived from today. */
+    private fun nextWeekStart(): String =
+        DateUtils.format(DateUtils.nextMonday(DateUtils.mondayOfWeek(containing = java.util.Date())))
+
     private suspend fun loadData() {
         val currentWeekStart = DateUtils.mondayString(containing = java.util.Date())
 
         val todayDeferred = viewModelScope.async { planRepository.today() }
         val weekDeferred = viewModelScope.async { planRepository.week(currentWeekStart) }
+        // Home needs next week for the "Next Workout" fallback. Only the Plan tab
+        // used to fetch it, so a launch straight to Home never had it.
+        val nextWeekDeferred = viewModelScope.async { planRepository.week(nextWeekStart()) }
         val goalDeferred = viewModelScope.async { planRepository.goalSummary() }
         val runsDeferred = viewModelScope.async { runsRepository.recent(limit = 3) }
         val decisionDeferred = viewModelScope.async { planRepository.latestDecision() }
@@ -194,6 +200,11 @@ class HomeViewModel @Inject constructor(
 
         when (val week = weekDeferred.await()) {
             is ApiResult.Success -> planRepository.setWeekData(week.data)
+            is ApiResult.Error -> Unit
+        }
+
+        when (val nextWeek = nextWeekDeferred.await()) {
+            is ApiResult.Success -> planRepository.cacheWeek(nextWeek.data)
             is ApiResult.Error -> Unit
         }
 
