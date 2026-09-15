@@ -40,6 +40,10 @@ val WarningContainerDark = Color(0xFF2D2200)
 val OnWarningContainerDark = Color(0xFFF0B429)
 val WarningBadgeDark = Color(0xFF4D3800)
 
+// Grid lines and plot border on the Activities volume chart.
+val ChartGridLight = Color(0xFFD3CFCF)
+val ChartGridDark  = Color(0xFF3A3A3C)
+
 // Plan-day card tokens. Completed reuses the brand accent (primary); missed is
 // grey. Planned/rest have no stroke.
 val CardBorderMissed    = Color(0xFFA6A6A6)

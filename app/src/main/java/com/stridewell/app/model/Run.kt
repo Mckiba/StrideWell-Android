@@ -27,5 +27,8 @@ data class Run(
 @Serializable
 data class RecentRunsResponse(
     val runs: List<Run>,
-    val hasMore: Boolean? = null
+    val hasMore: Boolean? = null,
+    // Completed/modified plan days linked to [runs]. Present only when requested
+    // with include_plan_day=true.
+    val plan_days: List<PlanDay>? = null,
 )

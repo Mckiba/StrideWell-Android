@@ -11,12 +11,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,15 +30,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.stridewell.app.ui.theme.StridewellTheme
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 
 private val NavShape = RoundedCornerShape(32.dp)
+private val NavHeight = 68.dp
 
 @Composable
 fun GlassNavBar(
@@ -67,45 +72,71 @@ fun GlassNavBar(
     val accent = colorScheme.primary
     val unselected = colorScheme.onSurfaceVariant
 
+    val glassStyle = HazeStyle(
+        backgroundColor = backgroundColor,
+        tints = listOf(HazeTint(color = tintColor)),
+        blurRadius = 24.dp,
+        noiseFactor = 0.06f,
+    )
+
     Row(
         modifier = modifier
             .navigationBarsPadding()
             .padding(horizontal = 16.dp)
             .padding(bottom = 12.dp)
             .fillMaxWidth()
-            .height(68.dp)
-            .shadow(
-                elevation = 20.dp,
-                shape = NavShape,
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.10f),
-                spotColor = Color.Black.copy(alpha = 0.14f)
-            )
-            .clip(NavShape)
-            .hazeEffect(
-                state = hazeState,
-                style = HazeStyle(
-                    backgroundColor = backgroundColor,
-                    tints = listOf(HazeTint(color = tintColor)),
-                    blurRadius = 24.dp,
-                    noiseFactor = 0.06f,
-                )
-            )
-            .border(width = 0.8.dp, color = borderColor, shape = NavShape),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .height(NavHeight),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        MainTab.entries.forEach { tab ->
-            GlassNavItem(
-                tab = tab,
-                isSelected = selectedTab == tab,
-                accent = accent,
-                unselected = unselected,
-                onClick = { onTabSelected(tab) }
-            )
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .glassSurface(NavShape, hazeState, glassStyle, borderColor),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MainTab.entries.filter { it != MainTab.Search }.forEach { tab ->
+                GlassNavItem(
+                    tab = tab,
+                    isSelected = selectedTab == tab,
+                    accent = accent,
+                    unselected = unselected,
+                    onClick = { onTabSelected(tab) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
+
+        GlassSearchButton(
+            isSelected = selectedTab == MainTab.Search,
+            accent = accent,
+            unselected = unselected,
+            onClick = { onTabSelected(MainTab.Search) },
+            modifier = Modifier
+                .size(NavHeight)
+                .glassSurface(CircleShape, hazeState, glassStyle, borderColor)
+        )
     }
 }
+
+private fun Modifier.glassSurface(
+    shape: Shape,
+    hazeState: HazeState,
+    style: HazeStyle,
+    borderColor: Color
+): Modifier = this
+    .shadow(
+        elevation = 20.dp,
+        shape = shape,
+        clip = false,
+        ambientColor = Color.Black.copy(alpha = 0.10f),
+        spotColor = Color.Black.copy(alpha = 0.14f)
+    )
+    .clip(shape)
+    .hazeEffect(state = hazeState, style = style)
+    .border(width = 0.8.dp, color = borderColor, shape = shape)
 
 @Composable
 private fun GlassNavItem(
@@ -113,7 +144,8 @@ private fun GlassNavItem(
     isSelected: Boolean,
     accent: Color,
     unselected: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val iconColor by animateColorAsState(
         targetValue = if (isSelected) accent else unselected,
@@ -128,8 +160,7 @@ private fun GlassNavItem(
     )
 
     Column(
-        modifier = Modifier
-            .width(56.dp)
+        modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -163,6 +194,61 @@ private fun GlassNavItem(
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
             lineHeight = 12.sp,
             maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun GlassSearchButton(
+    isSelected: Boolean,
+    accent: Color,
+    unselected: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val iconColor by animateColorAsState(
+        targetValue = if (isSelected) accent else unselected,
+        animationSpec = tween(durationMillis = 200),
+        label = "navIconColor_${MainTab.Search.name}"
+    )
+
+    Box(
+        modifier = modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = onClick
+        ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = MainTab.Search.icon,
+            contentDescription = MainTab.Search.label,
+            modifier = Modifier.size(24.dp),
+            tint = iconColor
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 400)
+@Composable
+private fun GlassNavBarPreview() {
+    StridewellTheme {
+        GlassNavBar(
+            selectedTab = MainTab.Activities,
+            onTabSelected = {},
+            hazeState = remember { HazeState() }
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 400, backgroundColor = 0xFF121212)
+@Composable
+private fun GlassNavBarSearchSelectedDarkPreview() {
+    StridewellTheme(darkTheme = true) {
+        GlassNavBar(
+            selectedTab = MainTab.Search,
+            onTabSelected = {},
+            hazeState = remember { HazeState() }
         )
     }
 }

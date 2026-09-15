@@ -19,6 +19,23 @@ object FormatUtils {
         formatDistance(meters, unit)
 
     /**
+     * Converts metres to a bare number in the display unit, for charts and large values.
+     * Metric: 8000 → 8.0, Imperial: 8000 → 4.97
+     */
+    fun distanceValue(meters: Double, unit: UnitSystem = UnitSystem.METRIC): Double =
+        when (unit) {
+            UnitSystem.METRIC   -> meters / 1000.0
+            UnitSystem.IMPERIAL -> meters / 1609.344
+        }
+
+    /** Full unit name shown under a large distance value: "Kilometers" or "Miles". */
+    fun distanceUnitName(unit: UnitSystem): String =
+        when (unit) {
+            UnitSystem.METRIC   -> "Kilometers"
+            UnitSystem.IMPERIAL -> "Miles"
+        }
+
+    /**
      * Converts seconds-per-kilometre to a pace string.
      * Metric:   330 → "5:30 /km",  240 → "4:00 /km"
      * Imperial: 330 → "8:51 /mi",  240 → "6:26 /mi"
