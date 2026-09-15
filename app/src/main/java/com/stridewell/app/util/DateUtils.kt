@@ -179,4 +179,143 @@ object DateUtils {
 
     /** Format a Date as YYYY-MM-DD. */
     fun format(date: Date): String = isoDate.format(date)
+
+    // MARK: - Activity Periods
+
+    /** Start of the [range] period containing [date]: its Monday, the 1st of its month, or January 1st. */
+    fun periodStart(range: ActivityRange, date: Date): Date {
+        if (range == ActivityRange.WEEK) return mondayOfWeek(date)
+        val cal = Calendar.getInstance()
+        cal.time = date
+        if (range == ActivityRange.MONTH) {
+            cal.set(Calendar.DAY_OF_MONTH, 1)
+        } else {
+            cal.set(Calendar.DAY_OF_YEAR, 1)
+        }
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.time
+    }
+
+    /** Start of the period before the one starting at [start]. */
+    fun previousPeriodStart(range: ActivityRange, start: Date): Date {
+        val cal = Calendar.getInstance()
+        cal.time = start
+        when (range) {
+            ActivityRange.WEEK -> cal.add(Calendar.DAY_OF_YEAR, -7)
+            ActivityRange.MONTH -> cal.add(Calendar.MONTH, -1)
+            ActivityRange.YEAR, ActivityRange.ALL -> cal.add(Calendar.YEAR, -1)
+        }
+        return cal.time
+    }
+
+    /**
+     * Period starts from the current period back to the one containing
+     * [firstRunDate], newest first. Empty for ALL, which has a single period.
+     */
+    fun periodStarts(range: ActivityRange, firstRunDate: Date?, today: Date = Date()): List<Date> {
+        if (range == ActivityRange.ALL) return emptyList()
+        val current = periodStart(range, today)
+        if (firstRunDate == null) return listOf(current)
+        val oldest = periodStart(range, firstRunDate)
+        return generateSequence(current) { previousPeriodStart(range, it) }
+            .takeWhile { !it.before(oldest) }
+            .toList()
+            .ifEmpty { listOf(current) }
+    }
+
+    /**
+     * Dropdown label: "This Week", "Last Week", "Sep 1 – 7", "This Month",
+     * "August", "Aug 2025", "This Year", "2025", "All Time".
+     */
+    fun periodLabel(range: ActivityRange, start: Date, today: Date = Date()): String {
+        val current = periodStart(range, today)
+        return when (range) {
+            ActivityRange.WEEK -> when (start) {
+                current -> "This Week"
+                previousPeriodStart(ActivityRange.WEEK, current) -> "Last Week"
+                else -> weekRangeLabel(start)
+            }
+            ActivityRange.MONTH -> {
+                if (start == current) return "This Month"
+                val startCal = Calendar.getInstance().apply { time = start }
+                val currentCal = Calendar.getInstance().apply { time = current }
+                val monthsBack = (currentCal.get(Calendar.YEAR) - startCal.get(Calendar.YEAR)) * 12 +
+                    currentCal.get(Calendar.MONTH) - startCal.get(Calendar.MONTH)
+                SimpleDateFormat(if (monthsBack < 12) "MMMM" else "MMM yyyy", Locale.getDefault()).format(start)
+            }
+            ActivityRange.YEAR ->
+                if (start == current) "This Year" else SimpleDateFormat("yyyy", Locale.getDefault()).format(start)
+            ActivityRange.ALL -> "All Time"
+        }
+    }
+
+    /** Section title for runs before today in the current period. */
+    fun earlierLabel(range: ActivityRange): String = when (range) {
+        ActivityRange.WEEK -> "Earlier This Week"
+        ActivityRange.MONTH -> "Earlier This Month"
+        ActivityRange.YEAR -> "Earlier This Year"
+        ActivityRange.ALL -> "Earlier"
+    }
+
+    /** "February 18" — section title for a single day. */
+    fun sectionDayLabel(date: Date): String =
+        SimpleDateFormat("MMMM d", Locale.getDefault()).format(date)
+
+    /**
+     * Short x-axis label for a summary bucket key: weekday initial, day of
+     * month, month initial, or year.
+     */
+    fun bucketAxisLabel(range: ActivityRange, key: String): String = when (range) {
+        ActivityRange.WEEK ->
+            parse(key)?.let { SimpleDateFormat("EEE", Locale.getDefault()).format(it).take(1) } ?: key
+        ActivityRange.MONTH ->
+            parse(key)?.let { SimpleDateFormat("d", Locale.getDefault()).format(it) } ?: key
+        ActivityRange.YEAR ->
+            parseMonthKey(key)?.let { SimpleDateFormat("MMM", Locale.getDefault()).format(it).take(1) } ?: key
+        ActivityRange.ALL -> key
+    }
+
+    /** Callout title for a summary bucket key: "Mon, Sep 14", "September 2026", "2026". */
+    fun bucketTitle(range: ActivityRange, key: String): String = when (range) {
+        ActivityRange.WEEK, ActivityRange.MONTH ->
+            parse(key)?.let { SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(it) } ?: key
+        ActivityRange.YEAR ->
+            parseMonthKey(key)?.let { SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(it) } ?: key
+        ActivityRange.ALL -> key
+    }
+
+    /** Inclusive first and last day (YYYY-MM-DD) covered by a summary bucket key. */
+    fun bucketWindow(range: ActivityRange, key: String): Pair<String, String>? = when (range) {
+        ActivityRange.WEEK, ActivityRange.MONTH -> parse(key)?.let { key to key }
+        ActivityRange.YEAR -> parseMonthKey(key)?.let { start ->
+            val cal = Calendar.getInstance()
+            cal.time = start
+            cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
+            format(start) to format(cal.time)
+        }
+        ActivityRange.ALL -> if (Regex("""\d{4}""").matches(key)) "$key-01-01" to "$key-12-31" else null
+    }
+
+    private fun parseMonthKey(key: String): Date? = try {
+        SimpleDateFormat("yyyy-MM", Locale.US).apply { isLenient = false }.parse(key)
+    } catch (_: Exception) {
+        null
+    }
+}
+
+// MARK: - Activity Range
+
+/** Period granularity for the Activities overview. [key] is the /runs/summary range param. */
+enum class ActivityRange(val key: String, val shortLabel: String, val title: String) {
+    WEEK("week", "W", "Week"),
+    MONTH("month", "M", "Month"),
+    YEAR("year", "Y", "Year"),
+    ALL("all", "All", "All Time");
+
+    companion object {
+        fun fromKey(key: String?): ActivityRange? = entries.firstOrNull { it.key == key }
+    }
 }

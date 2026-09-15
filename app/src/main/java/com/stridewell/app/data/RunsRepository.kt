@@ -9,6 +9,7 @@ import com.stridewell.app.api.RunsApi
 import com.stridewell.app.model.HeatmapResponse
 import com.stridewell.app.model.RecentRunsResponse
 import com.stridewell.app.model.RunDetailResponse
+import com.stridewell.app.model.RunSummaryResponse
 import com.stridewell.app.util.DateUtils
 import java.io.IOException
 import java.util.Date
@@ -86,6 +87,25 @@ class RunsRepository @Inject constructor(
      */
     suspend fun runDetail(id: String): ApiResult<RunDetailResponse> =
         safeCall { runsApi.runDetail(id) }
+
+    /** Totals and chart buckets for one Activities period. The view model caches per period. */
+    suspend fun summary(range: String, start: String?): ApiResult<RunSummaryResponse> =
+        safeCall { runsApi.summary(range, start) }
+
+    /**
+     * Runs whose local start date is within [from]..[to] (inclusive, YYYY-MM-DD),
+     * with plan days for plan-linked runs. Used by the Activities overview.
+     */
+    suspend fun runsInRange(from: String, to: String, limit: Int, offset: Int): ApiResult<RecentRunsResponse> =
+        safeCall {
+            runsApi.recent(
+                limit = limit,
+                offset = offset,
+                dateFrom = from,
+                dateTo = to,
+                includePlanDay = true
+            )
+        }
 
     suspend fun reset() {
         dataStore.edit { prefs ->

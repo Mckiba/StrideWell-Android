@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +39,7 @@ import com.stridewell.app.ui.background.weather.ResidueView
 import com.stridewell.app.ui.background.weather.StormContents
 import com.stridewell.app.ui.background.weather.WeatherViewModel
 import com.stridewell.app.ui.main.activities.ActivitiesScreen
+import com.stridewell.app.ui.main.activities.AllActivitiesScreen
 import com.stridewell.app.ui.main.chat.ChatViewModel
 import com.stridewell.app.ui.main.home.HomeScreen
 import com.stridewell.app.ui.main.chat.ChatScreen
@@ -56,7 +58,9 @@ enum class MainTab(
     Plan("Plan", Icons.Default.DateRange),
     Chat("Chat", Icons.Default.Edit),
     Activities("Activities", Icons.AutoMirrored.Filled.List),
-    Settings("Settings", Icons.Default.Settings)
+    Settings("Settings", Icons.Default.Settings),
+    // Rendered as the separate glass circle beside the tab pill, not inside it.
+    Search("Search", Icons.Default.Search)
 }
 
 @Composable
@@ -186,6 +190,13 @@ fun MainContainerScreen(
                 )
                 MainTab.Settings -> SettingsScreen(
                     onOpenFitnessProfile = onOpenFitnessProfile,
+                    hasLocationPermission = hasLocationPermission,
+                    heatmapViewModel = heatmapViewModel,
+                    weatherViewModel = weatherViewModel,
+                    modifier = Modifier
+                )
+                MainTab.Search -> AllActivitiesScreen(
+                    onNavigateToDetail = onNavigateToRunDetail,
                     hasLocationPermission = hasLocationPermission,
                     heatmapViewModel = heatmapViewModel,
                     weatherViewModel = weatherViewModel,

@@ -52,3 +52,50 @@ val ActivityStatValueStyle = TextStyle(
     fontWeight = FontWeight.Bold,
     fontSize   = 11.sp
 )
+
+// ── Activities overview text styles ────────────────────────────────────────────
+// SofiaSans ExtraBold and Light aren't bundled, so the hero value uses Bold and
+// the range labels use Regular.
+
+val ActivityHeroValueStyle = TextStyle(
+    fontFamily = SofiaSansFamily,
+    fontWeight = FontWeight.Bold,
+    fontSize   = 64.sp,
+    lineHeight = 70.sp
+)
+
+val ActivityHeroUnitStyle = TextStyle(
+    fontFamily = SofiaSansFamily,
+    fontWeight = FontWeight.Normal,
+    fontSize   = 20.sp
+)
+
+val ActivityPeriodLabelStyle = TextStyle(
+    fontFamily = SofiaSansFamily,
+    fontWeight = FontWeight.Normal,
+    fontSize   = 20.sp
+)
+
+val ActivityRangeLabelStyle = TextStyle(
+    fontFamily = SofiaSansFamily,
+    fontWeight = FontWeight.Normal,
+    fontSize   = 16.sp
+)
+
+val ActivityOverviewStatValueStyle = TextStyle(
+    fontFamily = InterFamily,
+    fontWeight = FontWeight.Bold,
+    fontSize   = 20.sp
+)
+
+val ActivityOverviewStatLabelStyle = TextStyle(
+    fontFamily = SofiaSansFamily,
+    fontWeight = FontWeight.Normal,
+    fontSize   = 16.sp
+)
+
+val ActivitySectionTitleStyle = TextStyle(
+    fontFamily = SofiaSansFamily,
+    fontWeight = FontWeight.Normal,
+    fontSize   = 18.sp
+)

@@ -3,6 +3,7 @@ package com.stridewell.app.api
 import com.stridewell.app.model.RecentRunsResponse
 import com.stridewell.app.model.HeatmapResponse
 import com.stridewell.app.model.RunDetailResponse
+import com.stridewell.app.model.RunSummaryResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -17,8 +18,16 @@ interface RunsApi {
         @Query("search") search: String? = null,
         @Query("date") date: String? = null,
         @Query("date_from") dateFrom: String? = null,
-        @Query("date_to") dateTo: String? = null
+        @Query("date_to") dateTo: String? = null,
+        @Query("include_plan_day") includePlanDay: Boolean? = null
     ): Response<RecentRunsResponse>
+
+    /** Totals and chart buckets for one Activities period. [start] is ignored for range=all. */
+    @GET("runs/summary")
+    suspend fun summary(
+        @Query("range") range: String,
+        @Query("start") start: String? = null
+    ): Response<RunSummaryResponse>
 
     @GET("runs/heatmap")
     suspend fun heatmap(): Response<HeatmapResponse>
